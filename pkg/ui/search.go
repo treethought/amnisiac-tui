@@ -43,6 +43,10 @@ func searchView(g *gocui.Gui) error {
 		return err
 	}
 
+    views = append(views, name)
+	curView = len(views) - 1
+	idxView += 1
+
 	return nil
 }
 

@@ -6,7 +6,7 @@ import (
 )
 
 // func subredditView(g *gocui.Gui)
-func searchResults(g *gocui.Gui, results []t.Item) error {
+func populateSearchResults(g *gocui.Gui, results []t.Item, query string) error {
 	maxX, maxY := g.Size()
 	name := "search_results"
 
@@ -37,10 +37,13 @@ func searchResults(g *gocui.Gui, results []t.Item) error {
 			y += 3
 		}
 	}
+    if _, err := g.SetCurrentView(name); err != nil {
+        return err
+    }
 
-	if _, err := g.SetCurrentView(name); err != nil {
-		return err
-	}
+    views = append(views, name)
+	curView = len(views) - 1
+	idxView += 1
 
 	return nil
 }

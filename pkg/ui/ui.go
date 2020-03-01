@@ -1,9 +1,14 @@
 package ui
 import (
 	"fmt"
-	"log"
 	"github.com/jroimartin/gocui"
-    // github.com/treethought/amnisiac/pkg/ui
+	"log"
+)
+
+var (
+	views   = []string{}
+	curView = -1
+	idxView = 0
 )
 
 func StartApp() {
@@ -19,6 +24,10 @@ func StartApp() {
 
 	g.SetManagerFunc(layout)
 
+	if err := searchView(g); err != nil {
+		log.Panicln(err)
+	}
+
 	if err := initKeybindings(g); err != nil {
 		log.Panicln(err)
 	}
@@ -26,12 +35,10 @@ func StartApp() {
 	if err := g.MainLoop(); err != nil && err != gocui.ErrQuit {
 		log.Panicln(err)
 	}
+
 }
 
 func layout(g *gocui.Gui) error {
-	if err := searchView(g); err != nil {
-		log.Panicln(err)
-	}
 
 	maxX, _ := g.Size()
 	v, err := g.SetView("menu", maxX-25, 0, maxX-1, 3)
@@ -42,9 +49,21 @@ func layout(g *gocui.Gui) error {
 		fmt.Fprintln(v, "amnisiac")
 		fmt.Fprintln(v, "^C: Exit")
 	}
-	// if err := PlayerView(g); err != nil {
-	// 	log.Panicln(err)
-	// }
+
+	return nil
+}
+
+func nextView(g *gocui.Gui, disableCurrent bool) error {
+	next := curView + 1
+	if next > len(views)-1 {
+		next = 0
+	}
+
+	if _, err := g.SetCurrentView(views[next]); err != nil {
+		return err
+	}
+
+	curView = next
 	return nil
 }
 
@@ -63,6 +82,11 @@ func initKeybindings(g *gocui.Gui) error {
 			return searchView(g)
 		}); err != nil {
 	}
+	if err := g.SetKeybinding("", gocui.KeyTab, gocui.ModNone,
+		func(g *gocui.Gui, v *gocui.View) error {
+			return nextView(g, true)
+		}); err != nil {
+		return err
+	}
 	return nil
 }
-
