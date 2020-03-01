@@ -2,6 +2,7 @@ package types
 import (
 	"github.com/jzelinskie/geddit"
 	"github.com/satori/go.uuid"
+	"github.com/yanatan16/golang-soundcloud/soundcloud"
 )
 
 type Item struct {
@@ -44,4 +45,24 @@ func MakeItemFromRedditPost(submission *geddit.Submission) (item Item, err error
 	return item, nil
 
 }
+
+
+func MakeItemFromSoundcloudTrack (track *soundcloud.Track) (item Item, err error) {
+
+	item.ID = string(uuid.NewV4().String())
+    item.PlatformTrackID = string(track.Id)
+    item.RawTitle = track.User.Username + " - " + track.Title
+    item.Artist = track.User.Username
+
+    item.SourcePlatform = "sc"
+    item.URL = track.User.PermalinkUrl
+    item.Domain = "soundcloud.com"
+    item.StreamURL = track.StreamUrl
+
+
+    return item, nil
+
+
+}
+
 
