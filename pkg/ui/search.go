@@ -18,7 +18,7 @@ func doSearch(g *gocui.Gui, v *gocui.View) (err error) {
 		return err
 	}
 
-	return searchResults(g, items)
+	return populateSearchResults(g, items)
 
 }
 
