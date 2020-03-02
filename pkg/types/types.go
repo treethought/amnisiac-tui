@@ -1,5 +1,8 @@
 package types
+
 import (
+	// "fmt"
+
 	"github.com/jzelinskie/geddit"
 	"github.com/satori/go.uuid"
 	"github.com/yanatan16/golang-soundcloud/soundcloud"
@@ -33,36 +36,28 @@ func MakeItemFromRedditPost(submission *geddit.Submission) (item Item, err error
 	item.PlatformTrackID = submission.FullID
 	item.RawTitle = submission.Title
 
-    item.SubReddit = submission.Subreddit
-    item.URL = submission.URL
-    item.Domain = submission.Domain
+	item.SubReddit = submission.Subreddit
+	item.URL = submission.URL
+	item.Domain = submission.Domain
 
-    item.SourcePlatform = "reddit"
-
-
-
+	item.SourcePlatform = "reddit"
 
 	return item, nil
 
 }
 
-
-func MakeItemFromSoundcloudTrack (track *soundcloud.Track) (item Item, err error) {
+func MakeItemFromSoundcloudTrack(track *soundcloud.Track) (item Item, err error) {
 
 	item.ID = string(uuid.NewV4().String())
-    item.PlatformTrackID = string(track.Id)
-    item.RawTitle = track.User.Username + " - " + track.Title
-    item.Artist = track.User.Username
+	item.PlatformTrackID = string(track.Id)
+	item.RawTitle = track.User.Username + " - " + track.Title
+	item.Artist = track.User.Username
 
-    item.SourcePlatform = "sc"
-    item.URL = track.User.PermalinkUrl
-    item.Domain = "soundcloud.com"
-    item.StreamURL = track.StreamUrl
+	item.SourcePlatform = "sc"
+	item.URL = track.User.PermalinkUrl
+	item.Domain = "soundcloud.com"
+	item.StreamURL = track.StreamUrl
 
-
-    return item, nil
-
+	return item, nil
 
 }
-
-

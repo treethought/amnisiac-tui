@@ -2,8 +2,6 @@ package reddit
 
 import (
 	"fmt"
-    // "log"
-	// "os"
 
 	"github.com/gocolly/colly"
 	"github.com/jzelinskie/geddit"
