@@ -13,7 +13,7 @@ func doSearch(g *gocui.Gui, v *gocui.View) (err error) {
         return err
     }
 
-    selectedSub := GetSelectedContent(sub_v)
+    selectedSub := GetSelectedContent(g, sub_v)
 
 
     sv, err := g.View("status_view")
