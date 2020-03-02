@@ -1,7 +1,10 @@
 package ui
+
 import (
 	"fmt"
 	"github.com/jroimartin/gocui"
+	r "github.com/treethought/amnisiac/pkg/reddit"
+	t "github.com/treethought/amnisiac/pkg/types"
 	"log"
 )
 
@@ -21,14 +24,29 @@ func StartApp() {
 	g.Highlight = true
 	g.SelFgColor = gocui.ColorCyan
 	g.Cursor = true
+	g.Mouse = true
 
 	g.SetManagerFunc(layout)
 
-	if err := searchView(g); err != nil {
+	if err := statusView(g); err != nil {
+		log.Panicln(err)
+	}
+
+	var emptyResult []t.Item
+
+	if err := populateSearchResults(g, emptyResult); err != nil {
+		log.Panicln(err)
+
+	}
+	if err := subredditView(g, ""); err != nil {
 		log.Panicln(err)
 	}
 
 	if err := initKeybindings(g); err != nil {
+		log.Panicln(err)
+	}
+
+	if _, err := g.SetCurrentView("sub_list"); err != nil {
 		log.Panicln(err)
 	}
 
@@ -40,17 +58,40 @@ func StartApp() {
 
 func layout(g *gocui.Gui) error {
 
-	maxX, _ := g.Size()
-	v, err := g.SetView("menu", maxX-25, 0, maxX-1, 3)
+	return nil
+}
+
+func subredditView(g *gocui.Gui, filter string) error {
+	maxX, maxY := g.Size()
+	name := "sub_list"
+	v, err := g.SetView(name, maxX-25, 0, maxX-1, maxY)
+
 	if err != nil {
 		if err != gocui.ErrUnknownView {
 			return err
 		}
-		fmt.Fprintln(v, "amnisiac")
-		fmt.Fprintln(v, "^C: Exit")
+
+		v.Frame = true
+		v.Title = "Subreddits"
+		v.Autoscroll = true
+		v.Highlight = true
+
 	}
 
+	subs, err := r.SubRedditsFromWiki("Music", "musicsubreddits")
+	if err != nil {
+		fmt.Fprintln(v, "Failed to fetch subs", err)
+	}
+	for _, sub := range subs {
+		fmt.Fprintln(v, sub)
+	}
+
+	views = append(views, name)
+	curView = len(views) - 1
+	idxView += 1
+
 	return nil
+
 }
 
 func nextView(g *gocui.Gui, disableCurrent bool) error {
@@ -75,11 +116,11 @@ func initKeybindings(g *gocui.Gui) error {
 		return err
 	}
 
-	if err := g.SetKeybinding("search_view", gocui.KeyEnter, gocui.ModNone, doSearch); err != nil {
+	if err := g.SetKeybinding("sub_list", gocui.KeyEnter, gocui.ModNone, doSearch); err != nil {
 	}
 	if err := g.SetKeybinding("", gocui.KeyCtrlSlash, gocui.ModNone,
 		func(g *gocui.Gui, v *gocui.View) error {
-			return searchView(g)
+			return statusView(g)
 		}); err != nil {
 	}
 	if err := g.SetKeybinding("", gocui.KeyTab, gocui.ModNone,
@@ -87,6 +128,45 @@ func initKeybindings(g *gocui.Gui) error {
 			return nextView(g, true)
 		}); err != nil {
 		return err
+	}
+
+	if err := g.SetKeybinding("", gocui.KeyCtrlJ, gocui.ModNone, cursorDown); err != nil {
+	}
+	if err := g.SetKeybinding("", gocui.KeyCtrlK, gocui.ModNone, cursorUp); err != nil {
+	}
+
+	return nil
+}
+
+func GetSelectedContent(v *gocui.View) string {
+	_, cy := v.Cursor()
+	lines := v.BufferLines()
+	selectedLine := lines[cy]
+	return selectedLine
+}
+
+func cursorDown(g *gocui.Gui, v *gocui.View) error {
+	if v != nil {
+		cx, cy := v.Cursor()
+		if err := v.SetCursor(cx, cy+1); err != nil {
+			ox, oy := v.Origin()
+			if err := v.SetOrigin(ox, oy+1); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+func cursorUp(g *gocui.Gui, v *gocui.View) error {
+	if v != nil {
+		ox, oy := v.Origin()
+		cx, cy := v.Cursor()
+		if err := v.SetCursor(cx, cy-1); err != nil && oy > 0 {
+			if err := v.SetOrigin(ox, oy-1); err != nil {
+				return err
+			}
+		}
 	}
 	return nil
 }

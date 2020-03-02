@@ -1,19 +1,29 @@
-
 package ui
+
 import (
 	"fmt"
 	"github.com/jroimartin/gocui"
 	r "github.com/treethought/amnisiac/pkg/reddit"
 )
 
-
 func doSearch(g *gocui.Gui, v *gocui.View) (err error) {
-	v.Clear()
 
-	g.Cursor = false
-	v.Editable = false
+    sub_v, err := g.View("sub_list")
+    if err != nil {
+        return err
+    }
 
-	items, err := r.FetchItemsFromReddit()
+    selectedSub := GetSelectedContent(sub_v)
+
+
+    sv, err := g.View("status_view")
+    if err != nil {
+        return err
+    }
+    fmt.Fprintln(sv, "Fetching items from", selectedSub)
+
+
+	items, err := r.FetchItemsFromReddit(selectedSub)
 	if err != nil {
 		return err
 	}
@@ -22,9 +32,12 @@ func doSearch(g *gocui.Gui, v *gocui.View) (err error) {
 
 }
 
-func searchView(g *gocui.Gui) error {
+
+
+
+func statusView(g *gocui.Gui) error {
 	maxX, _ := g.Size()
-	name := "search_view"
+	name := "status_view"
 	v, err := g.SetView(name, 0, 0, maxX-30, 2)
 	if err != nil {
 		if err != gocui.ErrUnknownView {
@@ -32,10 +45,8 @@ func searchView(g *gocui.Gui) error {
 		}
 		v.Clear()
 		v.Wrap = true
-		fmt.Fprintln(v, "Search:")
 		v.Editable = true
-
-		v.MoveCursor(9, 0, true)
+		v.Frame = true
 
 	}
 
@@ -43,13 +54,12 @@ func searchView(g *gocui.Gui) error {
 		return err
 	}
 
-    views = append(views, name)
+	views = append(views, name)
 	curView = len(views) - 1
 	idxView += 1
 
 	return nil
 }
-
 
 func simpleEditor(v *gocui.View, key gocui.Key, ch rune, mod gocui.Modifier) {
 	switch {
