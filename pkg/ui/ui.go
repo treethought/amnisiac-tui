@@ -14,12 +14,20 @@ var (
 	idxView = 0
 )
 
+func teardown(g *gocui.Gui) {
+    g.Close()
+    c := exec.Command("killall", "-q", "mpv")
+    c.Run()
+
+
+}
+
 func StartApp() {
 	g, err := gocui.NewGui(gocui.OutputNormal)
 	if err != nil {
 		log.Panicln(err)
 	}
-	defer g.Close()
+	defer teardown(g)
 
 	g.Highlight = true
 	g.SelFgColor = gocui.ColorCyan
@@ -73,7 +81,6 @@ func subredditView(g *gocui.Gui, filter string) error {
 
 		v.Frame = true
 		v.Title = "Subreddits"
-		// v.Autoscroll = true
 		v.Highlight = true
 
 	}
@@ -118,6 +125,8 @@ func initKeybindings(g *gocui.Gui) error {
 
 	if err := g.SetKeybinding("sub_list", gocui.KeyEnter, gocui.ModNone, doSearch); err != nil {
 	}
+	if err := g.SetKeybinding("search_results", gocui.KeyEnter, gocui.ModNone, PlayTrack); err != nil {
+	}
 	if err := g.SetKeybinding("", gocui.KeyCtrlSlash, gocui.ModNone,
 		func(g *gocui.Gui, v *gocui.View) error {
 			return statusView(g)
@@ -137,4 +146,3 @@ func initKeybindings(g *gocui.Gui) error {
 
 	return nil
 }
-

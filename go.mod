@@ -8,6 +8,7 @@ require (
 	github.com/antchfx/xmlquery v1.2.3 // indirect
 	github.com/antchfx/xpath v1.1.4 // indirect
 	github.com/beefsack/go-rate v0.0.0-20180408011153-efa7637bb9b6 // indirect
+	github.com/blang/mpv v0.0.0-20160810175505-d56d7352e068
 	github.com/gobwas/glob v0.2.3 // indirect
 	github.com/gocolly/colly v1.2.0
 	github.com/golang/groupcache v0.0.0-20200121045136-8c9f03a8e57e // indirect
