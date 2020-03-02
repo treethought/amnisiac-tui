@@ -2,7 +2,8 @@ package reddit
 
 import (
 	"fmt"
-	"os"
+    // "log"
+	// "os"
 
 	"github.com/gocolly/colly"
 	"github.com/jzelinskie/geddit"
@@ -85,14 +86,17 @@ func SubRedditsFromWiki(subreddit string, wikiname string) (subreddits []string,
 
 }
 
-func FetchItemsFromReddit() (reddit_items []types.Item, err error) {
+func FetchItemsFromReddit(query string) (reddit_items []types.Item, err error) {
 	subreddits, _ := SubRedditsFromWiki("Music", "musicsubreddits")
 	var submissions []*geddit.Submission
-	for _, s := range subreddits[:10] {
-		posts, _ := FetchSubmissions(s)
-		for _, p := range posts {
-			if IsMediaURL(p.URL) {
-				submissions = append(submissions, p)
+	for _, s := range subreddits {
+		if strings.Contains(s, query) {
+            // log.Println("fetching", s)
+			posts, _ := FetchSubmissions(s)
+			for _, p := range posts {
+				if IsMediaURL(p.URL) {
+					submissions = append(submissions, p)
+				}
 			}
 		}
 	}
