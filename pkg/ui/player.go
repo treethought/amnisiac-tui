@@ -1,14 +1,17 @@
-
 package ui
 
 import (
 	"fmt"
 	"github.com/blang/mpv"
 	"github.com/jroimartin/gocui"
-	// "github.com/yourok/go-mpv/mpv"
-	// "os/exec"
+	"os/exec"
 )
 
+func StartMPV() *exec.Cmd {
+    cmd := exec.Command("mpv", "--idle", "--input-ipc-server=/tmp/mpvsocket", "--no-video")
+    cmd.Start()
+    return cmd
+}
 
 func PlayTrack(g *gocui.Gui, v *gocui.View) error {
 
@@ -22,10 +25,11 @@ func PlayTrack(g *gocui.Gui, v *gocui.View) error {
 	ipcc := mpv.NewIPCClient("/tmp/mpvsocket") // Lowlevel client
 	c := mpv.NewClient(ipcc)                   // Highlevel client, can also use RPCClient
 
-    err := c.Loadfile(item.URL, mpv.LoadFileModeReplace)
+	err := c.Loadfile(item.URL, mpv.LoadFileModeReplace)
 	if err != nil {
 		fmt.Fprintln(statusv, err)
 		return err
 	}
 	return nil
 }
+

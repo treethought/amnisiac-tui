@@ -2,10 +2,13 @@ package ui
 
 import (
 	"fmt"
+	"log"
+	"os"
+	"os/exec"
+
 	"github.com/jroimartin/gocui"
 	r "github.com/treethought/amnisiac/pkg/reddit"
 	t "github.com/treethought/amnisiac/pkg/types"
-	"log"
 )
 
 var (
@@ -14,8 +17,9 @@ var (
 	idxView = 0
 )
 
-func teardown(g *gocui.Gui) {
+func teardown(g *gocui.Gui, mpvCmd *exec.Cmd) {
     g.Close()
+    mpvCmd.Process.Signal(os.Kill)
     c := exec.Command("killall", "-q", "mpv")
     c.Run()
 
@@ -23,11 +27,13 @@ func teardown(g *gocui.Gui) {
 }
 
 func StartApp() {
+    mpv_cmd := StartMPV()
+
 	g, err := gocui.NewGui(gocui.OutputNormal)
 	if err != nil {
 		log.Panicln(err)
 	}
-	defer teardown(g)
+	defer teardown(g, mpv_cmd)
 
 	g.Highlight = true
 	g.SelFgColor = gocui.ColorCyan
