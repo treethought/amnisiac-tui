@@ -3,33 +3,87 @@ package ui
 import (
 	"fmt"
 	"github.com/blang/mpv"
-	"github.com/jroimartin/gocui"
+	t "github.com/treethought/amnisiac/pkg/types"
+	"os"
 	"os/exec"
 )
 
-func StartMPV() *exec.Cmd {
-    cmd := exec.Command("mpv", "--idle", "--input-ipc-server=/tmp/mpvsocket", "--no-video")
-    cmd.Start()
-    return cmd
+// StartMPV starts mpv in idle mode and specifies the ipc socket
+func StartMPV() (*exec.Cmd, error) {
+	cmd := exec.Command("mpv", "--idle", "--input-ipc-server=/tmp/mpvsocket", "--no-video")
+	err := cmd.Start()
+	if err != nil {
+		return nil, err
+	}
+	return cmd, nil
 }
 
-func PlayTrack(g *gocui.Gui, v *gocui.View) error {
+type PlayerController interface {
+	Initialize() error
+	Shutdown() error
+	PlayTrack(item *t.Item) error
+	Pause() error
+	GetPosition() (int32, error)
+	Seek(int32) error
+}
 
-	selected_title := GetSelectedContent(g, v)
+type MPVController struct {
+	client  *mpv.Client
+	queue   map[int]t.Item
+	process *exec.Cmd
+}
 
-	item := resultMap[selected_title]
+// NewMPVController creates a new instance of an MPV Client satisfying the PlaerController interface
+func NewMPVController() *MPVController {
+	m := MPVController{
+		queue: map[int]t.Item{},
+	}
+	return &m
 
-	statusv, _ := g.View("status_view")
+}
 
-	fmt.Fprintln(statusv, "Playing", item.URL)
+func (m *MPVController) Initialize() error {
+	process, err := StartMPV()
+	if err != nil {
+		return err
+	}
+	m.process = process
 	ipcc := mpv.NewIPCClient("/tmp/mpvsocket") // Lowlevel client
 	c := mpv.NewClient(ipcc)                   // Highlevel client, can also use RPCClient
+	m.client = c
 
-	err := c.Loadfile(item.URL, mpv.LoadFileModeReplace)
+	return nil
+
+}
+
+func (m *MPVController) Shutdown() error {
+
+	err := m.process.Process.Signal(os.Kill)
 	if err != nil {
-		fmt.Fprintln(statusv, err)
 		return err
 	}
 	return nil
+
 }
 
+func (m *MPVController) PlayTrack(item *t.Item) error {
+
+	err := m.client.Loadfile(item.URL, mpv.LoadFileModeReplace)
+	if err != nil {
+		return err
+	}
+	return nil
+
+}
+
+func (m *MPVController) Pause() error {
+	return nil
+}
+
+func (m *MPVController) GetPosition() (int32, error) {
+	return 0, nil
+}
+
+func (m *MPVController) Seek(int32) error {
+	return nil
+}
