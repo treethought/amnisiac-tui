@@ -9,12 +9,6 @@ import (
 	t "github.com/treethought/amnisiac/pkg/types"
 )
 
-var (
-	views   = []string{}
-	curView = -1
-	idxView = 0
-)
-
 // Gui wraps the gocui Gui object which handles rendering and events
 type UI struct {
 	g      *gocui.Gui
@@ -100,7 +94,7 @@ func StartApp() {
 }
 
 func (ui *UI) initializeLayout() error {
-	if err := statusView(ui.g); err != nil {
+	if err := ui.statusView(ui.g); err != nil {
 		log.Panicln(err)
 	}
 
@@ -133,6 +127,29 @@ func layout(g *gocui.Gui) error {
 	return nil
 }
 
+func logView(ui *UI) error {
+	maxX, maxY := ui.g.Size()
+	name := "info_view"
+	v, err := ui.g.SetView(name, 0, maxY-3, maxX, maxY)
+
+	if err != nil {
+		if err != gocui.ErrUnknownView {
+			return err
+		}
+
+		v.Frame = true
+		v.Title = "Log"
+		v.Highlight = true
+
+	}
+
+	ui.State.views = append(ui.State.views, name)
+	ui.State.curView = len(ui.State.views) - 1
+	ui.State.idxView += 1
+
+	return nil
+
+}
 
 func subredditView(ui *UI, filter string) error {
 	maxX, maxY := ui.g.Size()
@@ -158,26 +175,37 @@ func subredditView(ui *UI, filter string) error {
 		fmt.Fprintln(v, sub)
 	}
 
-	views = append(views, name)
-	curView = len(views) - 1
-	idxView += 1
+	ui.State.views = append(ui.State.views, name)
+	ui.State.curView = len(ui.State.views) - 1
+	ui.State.idxView += 1
 
 	return nil
 
 }
 
-func nextView(gui *gocui.Gui, disableCurrent bool) error {
-	next := curView + 1
-	if next > len(views)-1 {
+func (ui *UI) nextView(disableCurrent bool) error {
+	next := ui.State.curView + 1
+	if next > len(ui.State.views)-1 {
 		next = 0
 	}
 
-	if _, err := gui.SetCurrentView(views[next]); err != nil {
+	if _, err := ui.g.SetCurrentView(ui.State.views[next]); err != nil {
 		return err
 	}
 
-	curView = next
+	ui.State.curView = next
 	return nil
+}
+
+func (ui *UI) writeLog(a ...interface{}) error {
+	v, err := ui.g.View("log_view")
+	if err != nil {
+		return err
+	}
+	fmt.Fprintln(v, a)
+
+	return nil
+
 }
 
 func (ui *UI) PlayTrack(gui *gocui.Gui, v *gocui.View) error {
@@ -196,6 +224,7 @@ func (ui *UI) PlayTrack(gui *gocui.Gui, v *gocui.View) error {
 func (ui *UI) initKeybindings() error {
 	if err := ui.g.SetKeybinding("", gocui.KeyCtrlC, gocui.ModNone,
 		func(g *gocui.Gui, v *gocui.View) error {
+			ui.Teardown()
 			return gocui.ErrQuit
 		}); err != nil {
 		return err
@@ -209,12 +238,12 @@ func (ui *UI) initKeybindings() error {
 	}
 	if err := ui.g.SetKeybinding("", gocui.KeyCtrlSlash, gocui.ModNone,
 		func(g *gocui.Gui, v *gocui.View) error {
-			return statusView(g)
+			return ui.statusView(g)
 		}); err != nil {
 	}
 	if err := ui.g.SetKeybinding("", gocui.KeyTab, gocui.ModNone,
 		func(g *gocui.Gui, v *gocui.View) error {
-			return nextView(g, true)
+			return ui.nextView(true)
 		}); err != nil {
 		return err
 	}

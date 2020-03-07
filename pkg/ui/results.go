@@ -39,9 +39,9 @@ func (ui *UI) populateSearchResults(results []*t.Item) error {
 		return err
 	}
 
-	views = append(views, name)
-	curView = len(views) - 1
-	idxView += 1
+	ui.State.views = append(ui.State.views, name)
+	ui.State.curView = len(ui.State.views) - 1
+	ui.State.idxView += 1
 
 	return nil
 }

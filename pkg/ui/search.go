@@ -30,7 +30,7 @@ func (ui *UI) doSearch(g *gocui.Gui, v *gocui.View) (err error) {
 
 }
 
-func statusView(g *gocui.Gui) error {
+func (ui *UI) statusView(g *gocui.Gui) error {
 	maxX, _ := g.Size()
 	name := "status_view"
 	v, err := g.SetView(name, 0, 0, maxX-30, 2)
@@ -49,9 +49,9 @@ func statusView(g *gocui.Gui) error {
 		return err
 	}
 
-	views = append(views, name)
-	curView = len(views) - 1
-	idxView += 1
+	ui.State.views = append(ui.State.views, name)
+	ui.State.curView = len(ui.State.views) - 1
+	ui.State.idxView += 1
 
 	return nil
 }
