@@ -11,11 +11,11 @@ var (
 )
 
 // func subredditView(g *gocui.Gui)
-func populateSearchResults(g *gocui.Gui, results []t.Item) error {
-	maxX, maxY := g.Size()
+func (ui *UI) populateSearchResults(results []*t.Item) error {
+	maxX, maxY := ui.g.Size()
 	name := "search_results"
 
-	v, err := g.SetView(name, 0, 5, maxX-50, maxY-5)
+	v, err := ui.g.SetView(name, 0, 5, maxX-50, maxY-5)
 	if err != nil {
 		if err != gocui.ErrUnknownView {
 			return err
@@ -32,10 +32,10 @@ func populateSearchResults(g *gocui.Gui, results []t.Item) error {
 	v.Clear()
 	for _, item := range results {
 		fmt.Fprintln(v, item.RawTitle)
-		resultMap[item.RawTitle] = item
+		ui.State.ResultBuffer[item.RawTitle] = item
 	}
 
-	if _, err := g.SetCurrentView(name); err != nil {
+	if _, err := ui.g.SetCurrentView(name); err != nil {
 		return err
 	}
 

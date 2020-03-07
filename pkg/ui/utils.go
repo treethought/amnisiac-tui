@@ -1,15 +1,15 @@
 package ui
 
 import (
-    // "strings"
+	// "strings"
 	"github.com/jroimartin/gocui"
 )
 
-func GetSelectedContent(g *gocui.Gui, v *gocui.View) string {
-    _, cy := v.Cursor()
+func (ui *UI) GetSelectedContent(g *gocui.Gui, v *gocui.View) string {
+	_, cy := v.Cursor()
 
 	lines := v.ViewBufferLines()
-    selectedLine := lines[cy]
+	selectedLine := lines[cy]
 
 	return selectedLine
 }

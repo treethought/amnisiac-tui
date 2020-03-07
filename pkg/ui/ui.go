@@ -3,8 +3,6 @@ package ui
 import (
 	"fmt"
 	"log"
-	"os"
-	"os/exec"
 
 	"github.com/jroimartin/gocui"
 	r "github.com/treethought/amnisiac/pkg/reddit"
@@ -17,23 +15,54 @@ var (
 	idxView = 0
 )
 
-func teardown(g *gocui.Gui, mpvCmd *exec.Cmd) {
-    g.Close()
-    mpvCmd.Process.Signal(os.Kill)
-    c := exec.Command("killall", "-q", "mpv")
-    c.Run()
+// Gui wraps the gocui Gui object which handles rendering and events
+type UI struct {
+	g      *gocui.Gui
+	State  uiState
+	Player PlayerController
+}
 
+// guiState stores internal state of resources
+type uiState struct {
+	ResultBuffer map[string]*t.Item
+	views        []string
+	curView      int
+	idxView      int
+}
+
+func NewGui() (*UI, error) {
+	fmt.Println("Creating app")
+
+	initialState := uiState{
+		ResultBuffer: map[string]*t.Item{},
+	}
+
+	mpvPlayer := NewMPVController()
+
+	ui := &UI{
+		State:  initialState,
+		Player: mpvPlayer,
+	}
+
+	return ui, nil
 
 }
 
-func StartApp() {
-    mpv_cmd := StartMPV()
+func (ui *UI) Start() error {
+
+	err := ui.Player.Initialize()
+	if err != nil {
+		return err
+	}
 
 	g, err := gocui.NewGui(gocui.OutputNormal)
 	if err != nil {
 		log.Panicln(err)
 	}
-	defer teardown(g, mpv_cmd)
+
+	ui.g = g
+
+	defer ui.Teardown()
 
 	g.Highlight = true
 	g.SelFgColor = gocui.ColorCyan
@@ -42,31 +71,60 @@ func StartApp() {
 
 	g.SetManagerFunc(layout)
 
-	if err := statusView(g); err != nil {
-		log.Panicln(err)
-	}
-
-	var emptyResult []t.Item
-
-	if err := populateSearchResults(g, emptyResult); err != nil {
-		log.Panicln(err)
-
-	}
-	if err := subredditView(g, ""); err != nil {
-		log.Panicln(err)
-	}
-
-	if err := initKeybindings(g); err != nil {
-		log.Panicln(err)
-	}
-
-	if _, err := g.SetCurrentView("sub_list"); err != nil {
-		log.Panicln(err)
+	err = ui.initializeLayout()
+	if err != nil {
+		return err
 	}
 
 	if err := g.MainLoop(); err != nil && err != gocui.ErrQuit {
 		log.Panicln(err)
 	}
+	return nil
+
+}
+
+func (ui *UI) Teardown() {
+	ui.Player.Shutdown()
+	ui.g.Close()
+
+}
+
+func StartApp() {
+
+	gui, err := NewGui()
+	if err != nil {
+		panic(err)
+	}
+	gui.Start()
+
+}
+
+func (ui *UI) initializeLayout() error {
+	if err := statusView(ui.g); err != nil {
+		log.Panicln(err)
+	}
+
+	var emptyResult []*t.Item
+
+	if err := ui.populateSearchResults(emptyResult); err != nil {
+		log.Panicln(err)
+
+	}
+	if err := logView(ui); err != nil {
+		log.Panicln(err)
+	}
+	if err := subredditView(ui, ""); err != nil {
+		log.Panicln(err)
+	}
+
+	if err := ui.initKeybindings(); err != nil {
+		log.Panicln(err)
+	}
+
+	if _, err := ui.g.SetCurrentView("sub_list"); err != nil {
+		log.Panicln(err)
+	}
+	return nil
 
 }
 
@@ -75,10 +133,11 @@ func layout(g *gocui.Gui) error {
 	return nil
 }
 
-func subredditView(g *gocui.Gui, filter string) error {
-	maxX, maxY := g.Size()
+
+func subredditView(ui *UI, filter string) error {
+	maxX, maxY := ui.g.Size()
 	name := "sub_list"
-	v, err := g.SetView(name, maxX-25, 0, maxX-1, maxY)
+	v, err := ui.g.SetView(name, maxX-25, 0, maxX-1, maxY)
 
 	if err != nil {
 		if err != gocui.ErrUnknownView {
@@ -107,13 +166,13 @@ func subredditView(g *gocui.Gui, filter string) error {
 
 }
 
-func nextView(g *gocui.Gui, disableCurrent bool) error {
+func nextView(gui *gocui.Gui, disableCurrent bool) error {
 	next := curView + 1
 	if next > len(views)-1 {
 		next = 0
 	}
 
-	if _, err := g.SetCurrentView(views[next]); err != nil {
+	if _, err := gui.SetCurrentView(views[next]); err != nil {
 		return err
 	}
 
@@ -121,33 +180,48 @@ func nextView(g *gocui.Gui, disableCurrent bool) error {
 	return nil
 }
 
-func initKeybindings(g *gocui.Gui) error {
-	if err := g.SetKeybinding("", gocui.KeyCtrlC, gocui.ModNone,
+func (ui *UI) PlayTrack(gui *gocui.Gui, v *gocui.View) error {
+
+	selectedLine := ui.GetSelectedContent(gui, v)
+
+	item := ui.State.ResultBuffer[selectedLine]
+
+	err := ui.Player.PlayTrack(item)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (ui *UI) initKeybindings() error {
+	if err := ui.g.SetKeybinding("", gocui.KeyCtrlC, gocui.ModNone,
 		func(g *gocui.Gui, v *gocui.View) error {
 			return gocui.ErrQuit
 		}); err != nil {
 		return err
 	}
 
-	if err := g.SetKeybinding("sub_list", gocui.KeyEnter, gocui.ModNone, doSearch); err != nil {
+	if err := ui.g.SetKeybinding("sub_list", gocui.KeyEnter, gocui.ModNone, ui.doSearch); err != nil {
+		return err
 	}
-	if err := g.SetKeybinding("search_results", gocui.KeyEnter, gocui.ModNone, PlayTrack); err != nil {
+	if err := ui.g.SetKeybinding("search_results", gocui.KeyEnter, gocui.ModNone, ui.PlayTrack); err != nil {
+		return err
 	}
-	if err := g.SetKeybinding("", gocui.KeyCtrlSlash, gocui.ModNone,
+	if err := ui.g.SetKeybinding("", gocui.KeyCtrlSlash, gocui.ModNone,
 		func(g *gocui.Gui, v *gocui.View) error {
 			return statusView(g)
 		}); err != nil {
 	}
-	if err := g.SetKeybinding("", gocui.KeyTab, gocui.ModNone,
+	if err := ui.g.SetKeybinding("", gocui.KeyTab, gocui.ModNone,
 		func(g *gocui.Gui, v *gocui.View) error {
 			return nextView(g, true)
 		}); err != nil {
 		return err
 	}
 
-	if err := g.SetKeybinding("", gocui.KeyCtrlJ, gocui.ModNone, cursorDown); err != nil {
+	if err := ui.g.SetKeybinding("", gocui.KeyCtrlJ, gocui.ModNone, cursorDown); err != nil {
 	}
-	if err := g.SetKeybinding("", gocui.KeyCtrlK, gocui.ModNone, cursorUp); err != nil {
+	if err := ui.g.SetKeybinding("", gocui.KeyCtrlK, gocui.ModNone, cursorUp); err != nil {
 	}
 
 	return nil

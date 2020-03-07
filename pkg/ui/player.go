@@ -1,7 +1,6 @@
 package ui
 
 import (
-	"fmt"
 	"github.com/blang/mpv"
 	t "github.com/treethought/amnisiac/pkg/types"
 	"os"

@@ -6,34 +6,29 @@ import (
 	r "github.com/treethought/amnisiac/pkg/reddit"
 )
 
-func doSearch(g *gocui.Gui, v *gocui.View) (err error) {
+func (ui *UI) doSearch(g *gocui.Gui, v *gocui.View) (err error) {
 
-    sub_v, err := g.View("sub_list")
-    if err != nil {
-        return err
-    }
+	sub_v, err := g.View("sub_list")
+	if err != nil {
+		return err
+	}
 
-    selectedSub := GetSelectedContent(g, sub_v)
+	selectedSub := ui.GetSelectedContent(g, sub_v)
 
-
-    sv, err := g.View("status_view")
-    if err != nil {
-        return err
-    }
-    fmt.Fprintln(sv, "Fetching items from", selectedSub)
-
+	sv, err := g.View("status_view")
+	if err != nil {
+		return err
+	}
+	fmt.Fprintln(sv, "Fetching items from", selectedSub)
 
 	items, err := r.FetchItemsFromReddit(selectedSub)
 	if err != nil {
 		return err
 	}
 
-	return populateSearchResults(g, items)
+	return ui.populateSearchResults(items)
 
 }
-
-
-
 
 func statusView(g *gocui.Gui) error {
 	maxX, _ := g.Size()
