@@ -21,7 +21,7 @@ type PlayerController interface {
 	Initialize() error
 	Shutdown() error
 	PlayTrack(item *t.Item) error
-	Pause() error
+	TogglePause() error
 	GetPosition() (int32, error)
 	Seek(int32) error
 }
@@ -75,8 +75,21 @@ func (m *MPVController) PlayTrack(item *t.Item) error {
 
 }
 
-func (m *MPVController) Pause() error {
-	return nil
+func (m *MPVController) TogglePause() error {
+    paused, err := m.client.Pause()
+    if err != nil {
+        return err
+    }
+    if paused {
+        err := m.client.SetPause(false)
+        return err
+        
+    } else {
+        err := m.client.SetPause(true)
+        return err
+    }
+
+	return err
 }
 
 func (m *MPVController) GetPosition() (int32, error) {

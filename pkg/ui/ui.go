@@ -221,3 +221,8 @@ func (ui *UI) PlayTrack(gui *gocui.Gui, v *gocui.View) error {
 	return nil
 }
 
+func (ui *UI) TogglePause(gui *gocui.Gui, v *gocui.View) error {
+    err := ui.Player.TogglePause()
+    return err
+}
+
