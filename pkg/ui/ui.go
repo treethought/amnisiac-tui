@@ -9,7 +9,7 @@ import (
 	t "github.com/treethought/amnisiac/pkg/types"
 )
 
-// Gui wraps the gocui Gui object which handles rendering and events
+// UI wraps the gocui Gui object which handles rendering and events
 type UI struct {
 	g      *gocui.Gui
 	State  uiState
@@ -58,6 +58,9 @@ func StartApp() {
 
 }
 
+// Start initializes a player and builds the UI
+// serves as the entrypoint for the application
+// by starting the gocui event loop
 func (ui *UI) Start() error {
 
 	err := ui.Player.Initialize()
@@ -85,6 +88,7 @@ func (ui *UI) Start() error {
 	if err != nil {
 		return err
 	}
+	ui.writeLog("Layout initialized")
 
 	if err := g.MainLoop(); err != nil && err != gocui.ErrQuit {
 		log.Panicln(err)
@@ -93,6 +97,7 @@ func (ui *UI) Start() error {
 
 }
 
+// initializeLayout renders the set of initial views on the UI
 func (ui *UI) initializeLayout() error {
 	if err := ui.statusView(ui.g); err != nil {
 		log.Panicln(err)
@@ -118,6 +123,9 @@ func (ui *UI) initializeLayout() error {
 	if _, err := ui.g.SetCurrentView("sub_list"); err != nil {
 		log.Panicln(err)
 	}
+
+	ui.writeLog("UI initialized")
+
 	return nil
 
 }
@@ -129,7 +137,7 @@ func layout(g *gocui.Gui) error {
 
 func logView(ui *UI) error {
 	maxX, maxY := ui.g.Size()
-	name := "info_view"
+	name := "log_view"
 	v, err := ui.g.SetView(name, 0, maxY-3, maxX, maxY)
 
 	if err != nil {
@@ -139,7 +147,8 @@ func logView(ui *UI) error {
 
 		v.Frame = true
 		v.Title = "Log"
-		v.Highlight = true
+		v.Highlight = false
+		v.Autoscroll = true
 
 	}
 
@@ -197,7 +206,8 @@ func (ui *UI) nextView(disableCurrent bool) error {
 	return nil
 }
 
-func (ui *UI) writeLog(a ...interface{}) error {
+// writeLog writes the message to the log UI view
+func (ui *UI) writeLog(a interface{}) error {
 	v, err := ui.g.View("log_view")
 	if err != nil {
 		return err
@@ -222,7 +232,6 @@ func (ui *UI) PlayTrack(gui *gocui.Gui, v *gocui.View) error {
 }
 
 func (ui *UI) TogglePause(gui *gocui.Gui, v *gocui.View) error {
-    err := ui.Player.TogglePause()
-    return err
+	err := ui.Player.TogglePause()
+	return err
 }
-
