@@ -5,7 +5,6 @@ import (
 	"log"
 
 	"github.com/jroimartin/gocui"
-	r "github.com/treethought/amnisiac/pkg/reddit"
 	t "github.com/treethought/amnisiac/pkg/types"
 )
 
@@ -73,16 +72,15 @@ func (ui *UI) Start() error {
 		log.Panicln(err)
 	}
 
-	ui.g = g
-
-	defer ui.Teardown()
-
 	g.Highlight = true
 	g.SelFgColor = gocui.ColorCyan
 	g.Cursor = true
 	g.Mouse = true
 
-	g.SetManagerFunc(layout)
+	ui.g = g
+	g.SetManager(ui)
+
+	defer ui.Teardown()
 
 	err = ui.initializeLayout()
 	if err != nil {
@@ -97,27 +95,20 @@ func (ui *UI) Start() error {
 
 }
 
-// initializeLayout renders the set of initial views on the UI
 func (ui *UI) initializeLayout() error {
-	if err := ui.statusView(ui.g); err != nil {
-		log.Panicln(err)
-	}
+
+	// render the base state
+	ui.Layout(ui.g)
 
 	var emptyResult []*t.Item
 
 	if err := ui.populateSearchResults(emptyResult); err != nil {
 		log.Panicln(err)
-
-	}
-	if err := logView(ui); err != nil {
-		log.Panicln(err)
-	}
-	if err := subredditView(ui, ""); err != nil {
-		log.Panicln(err)
 	}
 
-	if err := ui.initKeybindings(); err != nil {
+	if err := ui.populateSubredditListing(); err != nil {
 		log.Panicln(err)
+
 	}
 
 	if _, err := ui.g.SetCurrentView("sub_list"); err != nil {
@@ -125,17 +116,86 @@ func (ui *UI) initializeLayout() error {
 	}
 
 	ui.writeLog("UI initialized")
+	return nil
+}
+
+// Layout updates the UI and keybindings on each event.
+// This method allows UI to satisfy the gocui.Manager interface
+// while wrapping the render updates with updating of app state
+func (ui *UI) Layout(g *gocui.Gui) error {
+
+	if err := ui.renderResultsView(g); err != nil {
+		log.Panicln(err)
+	}
+
+	if err := ui.renderStatusView(g); err != nil {
+		log.Panicln(err)
+	}
+
+	if err := ui.renderLogView(g); err != nil {
+		log.Panicln(err)
+	}
+	if err := ui.renderSubredditView(g); err != nil {
+		log.Panicln(err)
+	}
+
+	if err := ui.initKeybindings(); err != nil {
+		log.Panicln(err)
+	}
 
 	return nil
 
 }
 
-func layout(g *gocui.Gui) error {
+func (ui *UI) renderResultsView(g *gocui.Gui) error {
+	maxX, maxY := g.Size()
+	name := "search_results"
+
+	v, err := g.SetView(name, 0, 5, maxX-50, maxY-5)
+	if err != nil {
+		if err != gocui.ErrUnknownView {
+			return err
+		}
+
+		v.Clear()
+		v.Highlight = true
+		v.Wrap = false
+		v.Editable = false
+		v.Frame = true
+		v.Title = "Results"
+
+		ui.State.views = append(ui.State.views, name)
+		ui.State.curView = len(ui.State.views) - 1
+		ui.State.idxView += 1
+	}
+	return nil
+
+}
+
+func (ui *UI) renderStatusView(g *gocui.Gui) error {
+	maxX, _ := g.Size()
+	name := "status_view"
+
+	v, err := g.SetView(name, 0, 0, maxX-30, 2)
+	if err != nil {
+		if err != gocui.ErrUnknownView {
+			return err
+		}
+		v.Clear()
+		v.Wrap = true
+		v.Editable = true
+		v.Frame = true
+
+		ui.State.views = append(ui.State.views, name)
+		ui.State.curView = len(ui.State.views) - 1
+		ui.State.idxView += 1
+
+	}
 
 	return nil
 }
 
-func logView(ui *UI) error {
+func (ui *UI) renderLogView(g *gocui.Gui) error {
 	maxX, maxY := ui.g.Size()
 	name := "log_view"
 	v, err := ui.g.SetView(name, 0, maxY-3, maxX, maxY)
@@ -150,17 +210,17 @@ func logView(ui *UI) error {
 		v.Highlight = false
 		v.Autoscroll = true
 
-	}
+		ui.State.views = append(ui.State.views, name)
+		ui.State.curView = len(ui.State.views) - 1
+		ui.State.idxView += 1
 
-	ui.State.views = append(ui.State.views, name)
-	ui.State.curView = len(ui.State.views) - 1
-	ui.State.idxView += 1
+	}
 
 	return nil
 
 }
 
-func subredditView(ui *UI, filter string) error {
+func (ui *UI) renderSubredditView(g *gocui.Gui) error {
 	maxX, maxY := ui.g.Size()
 	name := "sub_list"
 	v, err := ui.g.SetView(name, maxX-25, 0, maxX-1, maxY)
@@ -174,19 +234,11 @@ func subredditView(ui *UI, filter string) error {
 		v.Title = "Subreddits"
 		v.Highlight = true
 
-	}
+		ui.State.views = append(ui.State.views, name)
+		ui.State.curView = len(ui.State.views) - 1
+		ui.State.idxView += 1
 
-	subs, err := r.SubRedditsFromWiki("Music", "musicsubreddits")
-	if err != nil {
-		fmt.Fprintln(v, "Failed to fetch subs", err)
 	}
-	for _, sub := range subs {
-		fmt.Fprintln(v, sub)
-	}
-
-	ui.State.views = append(ui.State.views, name)
-	ui.State.curView = len(ui.State.views) - 1
-	ui.State.idxView += 1
 
 	return nil
 

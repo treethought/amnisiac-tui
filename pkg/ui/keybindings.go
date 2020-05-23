@@ -1,6 +1,7 @@
 package ui
+
 import (
-    "github.com/jroimartin/gocui"
+	"github.com/jroimartin/gocui"
 )
 
 func (ui *UI) initKeybindings() error {
@@ -23,12 +24,12 @@ func (ui *UI) initKeybindings() error {
 	if err := ui.g.SetKeybinding("status_view", gocui.KeyEnter, gocui.ModNone, ui.PlayTrack); err != nil {
 		return err
 	}
-	if err := ui.g.SetKeybinding("", gocui.KeyCtrlSlash, gocui.ModNone,
-		func(g *gocui.Gui, v *gocui.View) error {
-            g.SetCurrentView("status_view")
-			return ui.statusView(g)
-		}); err != nil {
-	}
+	// if err := ui.g.SetKeybinding("", gocui.KeyCtrlSlash, gocui.ModNone,
+	// 	func(g *gocui.Gui, v *gocui.View) error {
+	//         g.SetCurrentView("status_view")
+	// 		return ui.statusView(g)
+	// 	}); err != nil {
+	// }
 	if err := ui.g.SetKeybinding("", gocui.KeyTab, gocui.ModNone,
 		func(g *gocui.Gui, v *gocui.View) error {
 			return ui.nextView(true)

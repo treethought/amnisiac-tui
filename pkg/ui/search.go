@@ -2,6 +2,7 @@ package ui
 
 import (
 	"fmt"
+
 	"github.com/jroimartin/gocui"
 	r "github.com/treethought/amnisiac/pkg/reddit"
 )
@@ -30,32 +31,6 @@ func (ui *UI) doSearch(g *gocui.Gui, v *gocui.View) (err error) {
 
 }
 
-func (ui *UI) statusView(g *gocui.Gui) error {
-	maxX, _ := g.Size()
-	name := "status_view"
-	v, err := g.SetView(name, 0, 0, maxX-30, 2)
-	if err != nil {
-		if err != gocui.ErrUnknownView {
-			return err
-		}
-		v.Clear()
-		v.Wrap = true
-		v.Editable = true
-		v.Frame = true
-
-	}
-
-	if _, err := g.SetCurrentView(name); err != nil {
-		return err
-	}
-
-	ui.State.views = append(ui.State.views, name)
-	ui.State.curView = len(ui.State.views) - 1
-	ui.State.idxView += 1
-
-	return nil
-}
-
 func simpleEditor(v *gocui.View, key gocui.Key, ch rune, mod gocui.Modifier) {
 	switch {
 	case ch != 0 && mod == 0:
@@ -65,4 +40,21 @@ func simpleEditor(v *gocui.View, key gocui.Key, ch rune, mod gocui.Modifier) {
 	case key == gocui.KeyBackspace || key == gocui.KeyBackspace2:
 		v.EditDelete(true)
 	}
+}
+
+func (ui *UI) populateSubredditListing() error {
+	v, err := ui.g.View("sub_list")
+	if err != nil {
+		return err
+	}
+
+	subs, err := r.SubRedditsFromWiki("Music", "musicsubreddits")
+	if err != nil {
+		fmt.Fprintln(v, "Failed to fetch subs", err)
+	}
+	for _, sub := range subs {
+		fmt.Fprintln(v, sub)
+	}
+	return err
+
 }
