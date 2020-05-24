@@ -105,6 +105,7 @@ func (ui *UI) Start() error {
 }
 
 func (ui *UI) initializeLayout() error {
+	ui.writeLog("Initializing layout state")
 
 	// render the base state
 	ui.Layout(ui.g)
@@ -115,14 +116,7 @@ func (ui *UI) initializeLayout() error {
 		log.Panicln(err)
 	}
 
-	if err := ui.populateSubredditListing(); err != nil {
-		log.Panicln(err)
-
-	}
-
-	if _, err := ui.g.SetCurrentView("sub_list"); err != nil {
-		log.Panicln(err)
-	}
+	go ui.populateSubredditListing()
 
 	ui.writeLog("UI initialized")
 	return nil

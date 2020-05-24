@@ -47,11 +47,14 @@ func (ui *UI) populateSubredditListing() error {
 	if err != nil {
 		return err
 	}
+	fmt.Fprintln(v, "Loading....")
 
 	subs, err := r.SubRedditsFromWiki("Music", "musicsubreddits")
 	if err != nil {
-		fmt.Fprintln(v, "Failed to fetch subs", err)
+		ui.writeLog(v, "Failed to fetch subs", err)
 	}
+	ui.writeLog(v, "Subreddits retrieved", err)
+	v.Clear()
 	for _, sub := range subs {
 		fmt.Fprintln(v, sub)
 	}
