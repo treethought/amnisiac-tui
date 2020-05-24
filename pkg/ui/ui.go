@@ -62,10 +62,7 @@ func StartApp() {
 // by starting the gocui event loop
 func (ui *UI) Start() error {
 
-	err := ui.Player.Initialize()
-	if err != nil {
-		return err
-	}
+	go ui.Player.Initialize()
 
 	g, err := gocui.NewGui(gocui.OutputNormal)
 	if err != nil {
