@@ -5,30 +5,47 @@ import (
 
 	"github.com/jroimartin/gocui"
 	r "github.com/treethought/amnisiac/pkg/reddit"
+	"github.com/treethought/amnisiac/pkg/types"
 )
 
 func (ui *UI) doSearch(g *gocui.Gui, v *gocui.View) (err error) {
+	ui.writeLog("Performing search")
 
 	sub_v, err := g.View("sub_list")
 	if err != nil {
 		return err
 	}
 
-	selectedSub := ui.GetSelectedContent(g, sub_v)
+	selectedSub := ui.GetSelectedContent(sub_v)
 
-	sv, err := g.View("status_view")
-	if err != nil {
-		return err
+	go ui.searchAndDisplayResults(selectedSub)
+	return nil
+
+}
+
+func (ui *UI) searchAndDisplayResults(subreddits ...string) error {
+	ui.writeLog("Fetching items from", subreddits)
+	// sv, err := g.View("status_view")
+	// if err != nil {
+	// 	return err
+	// }
+	// fmt.Fprintln(sv, "Fetching items from", subreddit)
+
+	var items []*types.Item
+	for _, s := range subreddits {
+		subItems, err := r.FetchItemsFromReddit(s)
+		if err != nil {
+			return err
+		}
+		for _, s := range subItems {
+			items = append(items, s)
+		}
+
+		ui.writeLog("got items, populating")
+		ui.populateSearchResults(items)
+
 	}
-	fmt.Fprintln(sv, "Fetching items from", selectedSub)
-
-	items, err := r.FetchItemsFromReddit(selectedSub)
-	if err != nil {
-		return err
-	}
-
-	return ui.populateSearchResults(items)
-
+	return nil
 }
 
 func simpleEditor(v *gocui.View, key gocui.Key, ch rune, mod gocui.Modifier) {
