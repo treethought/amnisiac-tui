@@ -79,6 +79,11 @@ func (ui *UI) Start() error {
 
 	ui.g = g
 	g.SetManager(ui)
+	ui.writeLog("Manager set")
+
+	if err := ui.initKeybindings(); err != nil {
+		log.Panicln(err)
+	}
 
 	defer ui.Teardown()
 
@@ -87,6 +92,10 @@ func (ui *UI) Start() error {
 		return err
 	}
 	ui.writeLog("Layout initialized")
+
+	if _, err := ui.g.SetCurrentView("sub_list"); err != nil {
+		return err
+	}
 
 	if err := g.MainLoop(); err != nil && err != gocui.ErrQuit {
 		log.Panicln(err)
@@ -136,10 +145,6 @@ func (ui *UI) Layout(g *gocui.Gui) error {
 		log.Panicln(err)
 	}
 	if err := ui.renderSubredditView(g); err != nil {
-		log.Panicln(err)
-	}
-
-	if err := ui.initKeybindings(); err != nil {
 		log.Panicln(err)
 	}
 

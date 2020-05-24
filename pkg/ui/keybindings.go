@@ -5,6 +5,7 @@ import (
 )
 
 func (ui *UI) initKeybindings() error {
+	ui.writeLog("Initializing keybindings")
 	if err := ui.g.SetKeybinding("", gocui.KeyCtrlC, gocui.ModNone,
 		func(g *gocui.Gui, v *gocui.View) error {
 			return gocui.ErrQuit
