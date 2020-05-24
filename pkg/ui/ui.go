@@ -275,9 +275,9 @@ func (ui *UI) writeLog(a interface{}) error {
 
 }
 
-func (ui *UI) PlayTrack(gui *gocui.Gui, v *gocui.View) error {
+func (ui *UI) SelectTrack(gui *gocui.Gui, v *gocui.View) error {
 
-	selectedLine := ui.GetSelectedContent(gui, v)
+	selectedLine := ui.GetSelectedContent(v)
 
 	item := ui.State.ResultBuffer[selectedLine]
 

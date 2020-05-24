@@ -5,7 +5,7 @@ import (
 	"github.com/jroimartin/gocui"
 )
 
-func (ui *UI) GetSelectedContent(g *gocui.Gui, v *gocui.View) string {
+func (ui *UI) GetSelectedContent(v *gocui.View) string {
 	_, cy := v.Cursor()
 
 	lines := v.ViewBufferLines()
