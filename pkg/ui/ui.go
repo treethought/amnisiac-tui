@@ -13,6 +13,7 @@ type UI struct {
 	g      *gocui.Gui
 	State  uiState
 	Player PlayerController
+	Logger log.Logger
 }
 
 // guiState stores internal state of resources
@@ -163,22 +164,4 @@ func (ui *UI) writeLog(a ...interface{}) error {
 
 	return nil
 
-}
-
-func (ui *UI) SelectTrack(gui *gocui.Gui, v *gocui.View) error {
-
-	selectedLine := ui.GetSelectedContent(v)
-
-	item := ui.State.ResultBuffer[selectedLine]
-
-	err := ui.Player.PlayTrack(item)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func (ui *UI) TogglePause(gui *gocui.Gui, v *gocui.View) error {
-	err := ui.Player.TogglePause()
-	return err
 }

@@ -3,25 +3,10 @@ package ui
 import (
 	"fmt"
 
-	"github.com/jroimartin/gocui"
 	r "github.com/treethought/amnisiac/pkg/reddit"
 	"github.com/treethought/amnisiac/pkg/types"
+	t "github.com/treethought/amnisiac/pkg/types"
 )
-
-func (ui *UI) doSearch(g *gocui.Gui, v *gocui.View) (err error) {
-	ui.writeLog("Performing search")
-
-	sub_v, err := g.View("sub_list")
-	if err != nil {
-		return err
-	}
-
-	selectedSub := ui.GetSelectedContent(sub_v)
-
-	go ui.searchAndDisplayResults(selectedSub)
-	return nil
-
-}
 
 func (ui *UI) searchAndDisplayResults(subreddits ...string) error {
 	ui.writeLog("Fetching items from", subreddits)
@@ -41,17 +26,6 @@ func (ui *UI) searchAndDisplayResults(subreddits ...string) error {
 
 	}
 	return nil
-}
-
-func simpleEditor(v *gocui.View, key gocui.Key, ch rune, mod gocui.Modifier) {
-	switch {
-	case ch != 0 && mod == 0:
-		v.EditWrite(ch)
-	case key == gocui.KeySpace:
-		v.EditWrite(' ')
-	case key == gocui.KeyBackspace || key == gocui.KeyBackspace2:
-		v.EditDelete(true)
-	}
 }
 
 func (ui *UI) populateSubredditListing() error {
@@ -75,4 +49,29 @@ func (ui *UI) populateSubredditListing() error {
 	ui.updateUI()
 	return err
 
+}
+
+// populateSearchResults replaces the results buffer with the current search results
+func (ui *UI) populateSearchResults(results []*t.Item) error {
+	ui.writeLog("populating search results")
+	maxX, maxY := ui.g.Size()
+	name := "search_results"
+
+	v, err := ui.g.SetView(name, 0, 5, maxX-50, maxY-5)
+	if err != nil {
+		return err
+	}
+
+	v.Clear()
+	for _, item := range results {
+		fmt.Fprintln(v, item.RawTitle)
+		ui.State.ResultBuffer[item.RawTitle] = item
+	}
+
+	// ui.updateUI()
+	if _, err := ui.g.SetCurrentView(name); err != nil {
+		return err
+	}
+
+	return nil
 }
