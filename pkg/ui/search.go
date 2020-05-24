@@ -25,11 +25,6 @@ func (ui *UI) doSearch(g *gocui.Gui, v *gocui.View) (err error) {
 
 func (ui *UI) searchAndDisplayResults(subreddits ...string) error {
 	ui.writeLog("Fetching items from", subreddits)
-	// sv, err := g.View("status_view")
-	// if err != nil {
-	// 	return err
-	// }
-	// fmt.Fprintln(sv, "Fetching items from", subreddit)
 
 	var items []*types.Item
 	for _, s := range subreddits {
@@ -69,9 +64,9 @@ func (ui *UI) populateSubredditListing() error {
 
 	subs, err := r.SubRedditsFromWiki("Music", "musicsubreddits")
 	if err != nil {
-		ui.writeLog(v, "Failed to fetch subs", err)
+		ui.writeLog("Failed to fetch subs", err)
 	}
-	ui.writeLog(v, "Subreddits retrieved", err)
+	ui.writeLog("Subreddits retrieved")
 	ui.updateUI()
 	v.Clear()
 	for _, sub := range subs {

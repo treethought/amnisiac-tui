@@ -263,12 +263,13 @@ func (ui *UI) nextView(disableCurrent bool) error {
 }
 
 // writeLog writes the message to the log UI view
-func (ui *UI) writeLog(a interface{}) error {
+func (ui *UI) writeLog(a ...interface{}) error {
+
 	v, err := ui.g.View("log_view")
 	if err != nil {
 		return err
 	}
-	fmt.Fprintln(v, a)
+	fmt.Fprintln(v, a...)
 	ui.updateUI()
 
 	return nil
