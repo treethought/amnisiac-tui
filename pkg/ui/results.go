@@ -12,6 +12,7 @@ var (
 
 // populateSearchResults replaces the results buffer with the current search results
 func (ui *UI) populateSearchResults(results []*t.Item) error {
+	ui.writeLog("populating search results")
 	maxX, maxY := ui.g.Size()
 	name := "search_results"
 
@@ -26,6 +27,7 @@ func (ui *UI) populateSearchResults(results []*t.Item) error {
 		ui.State.ResultBuffer[item.RawTitle] = item
 	}
 
+	// ui.updateUI()
 	if _, err := ui.g.SetCurrentView(name); err != nil {
 		return err
 	}

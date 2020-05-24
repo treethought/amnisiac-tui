@@ -146,6 +146,14 @@ func (ui *UI) Layout(g *gocui.Gui) error {
 
 }
 
+// updateUI forces a redraw of the views
+// wrapper for *gocui.Gui.Update that must be called when
+// changes are made that do not result from keybindings
+func (ui *UI) updateUI() {
+	ui.g.Update(ui.Layout)
+
+}
+
 func (ui *UI) renderResultsView(g *gocui.Gui) error {
 	maxX, maxY := g.Size()
 	name := "search_results"
@@ -264,6 +272,7 @@ func (ui *UI) writeLog(a interface{}) error {
 		return err
 	}
 	fmt.Fprintln(v, a)
+	ui.updateUI()
 
 	return nil
 
