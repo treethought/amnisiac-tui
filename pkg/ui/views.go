@@ -6,7 +6,7 @@ func (ui *UI) renderResultsView(g *gocui.Gui) error {
 	maxX, maxY := g.Size()
 	name := "search_results"
 
-	v, err := g.SetView(name, 0, 5, maxX-50, maxY-5)
+	v, err := g.SetView(name, 1, 5, maxX-30, maxY-5)
 	if err != nil {
 		if err != gocui.ErrUnknownView {
 			return err
@@ -28,10 +28,10 @@ func (ui *UI) renderResultsView(g *gocui.Gui) error {
 }
 
 func (ui *UI) renderStatusView(g *gocui.Gui) error {
-	maxX, _ := g.Size()
+	maxX, maxY := ui.g.Size()
 	name := "status_view"
 
-	v, err := g.SetView(name, 0, 0, maxX-30, 2)
+	v, err := ui.g.SetView(name, 1, maxY-3, maxX-30, maxY-1)
 	if err != nil {
 		if err != gocui.ErrUnknownView {
 			return err
@@ -40,6 +40,7 @@ func (ui *UI) renderStatusView(g *gocui.Gui) error {
 		v.Wrap = true
 		v.Editable = true
 		v.Frame = true
+		v.Title = "Status"
 
 		ui.State.views = append(ui.State.views, name)
 		ui.State.curView = len(ui.State.views) - 1
@@ -51,9 +52,9 @@ func (ui *UI) renderStatusView(g *gocui.Gui) error {
 }
 
 func (ui *UI) renderLogView(g *gocui.Gui) error {
-	maxX, maxY := ui.g.Size()
+	maxX, _ := ui.g.Size()
 	name := "log_view"
-	v, err := ui.g.SetView(name, 0, maxY-3, maxX, maxY)
+	v, err := g.SetView(name, 1, 0, maxX-30, 2)
 
 	if err != nil {
 		if err != gocui.ErrUnknownView {
@@ -78,7 +79,7 @@ func (ui *UI) renderLogView(g *gocui.Gui) error {
 func (ui *UI) renderSubredditView(g *gocui.Gui) error {
 	maxX, maxY := ui.g.Size()
 	name := "sub_list"
-	v, err := ui.g.SetView(name, maxX-25, 0, maxX-1, maxY)
+	v, err := ui.g.SetView(name, maxX-25, 0, maxX-2, maxY-1)
 
 	if err != nil {
 		if err != gocui.ErrUnknownView {
