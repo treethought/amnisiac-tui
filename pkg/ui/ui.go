@@ -120,6 +120,13 @@ func (ui *UI) initializeLayout() error {
 	return nil
 }
 
+// updateUI forces a redraw of the views
+// wrapper for *gocui.Gui.Update that must be called when
+// changes are made that do not result from keybindings
+func (ui *UI) updateUI() {
+	ui.g.Update(ui.Layout)
+}
+
 // Layout updates the UI and keybindings on each event.
 // This method allows UI to satisfy the gocui.Manager interface
 // while wrapping the render updates with updating of app state
@@ -139,28 +146,6 @@ func (ui *UI) Layout(g *gocui.Gui) error {
 	if err := ui.renderSubredditView(g); err != nil {
 		log.Panicln(err)
 	}
-
-	return nil
-
-}
-
-// updateUI forces a redraw of the views
-// wrapper for *gocui.Gui.Update that must be called when
-// changes are made that do not result from keybindings
-func (ui *UI) updateUI() {
-	ui.g.Update(ui.Layout)
-
-}
-
-// writeLog writes the message to the log UI view
-func (ui *UI) writeLog(a ...interface{}) error {
-
-	v, err := ui.g.View("log_view")
-	if err != nil {
-		return err
-	}
-	fmt.Fprintln(v, a...)
-	ui.updateUI()
 
 	return nil
 
