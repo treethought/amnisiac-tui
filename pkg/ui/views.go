@@ -1,6 +1,10 @@
 package ui
 
-import "github.com/jroimartin/gocui"
+import (
+	"fmt"
+
+	"github.com/jroimartin/gocui"
+)
 
 func (ui *UI) renderResultsView(g *gocui.Gui) error {
 	maxX, maxY := g.Size()
@@ -28,6 +32,25 @@ func (ui *UI) renderResultsView(g *gocui.Gui) error {
 
 }
 
+func (ui *UI) buildStatusMessage() (string, error) {
+	status := ui.Player.GetStatus()
+	item := status.currentItem
+	if item == nil {
+		return "...", nil
+	}
+
+	var progressMsg string
+
+	positionInt := int(status.currentPosition)
+	durationInt := int(status.currentDuration)
+
+	progressMsg = fmt.Sprintf("%d", positionInt) + "/" + fmt.Sprintf("%d", durationInt)
+
+	statusMsg := progressMsg + " -- " + item.RawTitle
+	return statusMsg, nil
+
+}
+
 func (ui *UI) renderStatusView(g *gocui.Gui) error {
 	maxX, maxY := ui.g.Size()
 	name := "status_view"
@@ -49,6 +72,12 @@ func (ui *UI) renderStatusView(g *gocui.Gui) error {
 		ui.State.idxView += 1
 
 	}
+	v.Clear()
+	msg, err := ui.buildStatusMessage()
+	if err != nil {
+		fmt.Fprintln(v, err.Error())
+	}
+	fmt.Fprintln(v, msg)
 
 	return nil
 }

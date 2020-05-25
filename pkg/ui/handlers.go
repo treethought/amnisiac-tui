@@ -5,6 +5,7 @@ import (
 )
 
 func (ui *UI) SelectTrack(gui *gocui.Gui, v *gocui.View) error {
+	// ui.writeStatus("...")
 
 	selectedLine := ui.GetSelectedContent(v)
 
