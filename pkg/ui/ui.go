@@ -3,6 +3,7 @@ package ui
 import (
 	"fmt"
 	"log"
+	"time"
 
 	"github.com/jroimartin/gocui"
 	t "github.com/treethought/amnisiac/pkg/types"
@@ -64,6 +65,15 @@ func StartApp() {
 
 }
 
+func (ui *UI) pollPlayerStatus() {
+	ui.log("Starting status polling")
+	for {
+		time.Sleep(1 * time.Second)
+		ui.renderStatusView(ui.g)
+		ui.updateUI()
+	}
+}
+
 // Start initializes a player and builds the UI
 // serves as the entrypoint for the application
 // by starting the gocui event loop
@@ -101,6 +111,8 @@ func (ui *UI) Start() error {
 	if _, err := ui.g.SetCurrentView("sub_list"); err != nil {
 		return err
 	}
+
+	go ui.pollPlayerStatus()
 
 	if err := g.MainLoop(); err != nil && err != gocui.ErrQuit {
 		log.Panicln(err)
