@@ -13,7 +13,7 @@ type UI struct {
 	g      *gocui.Gui
 	State  uiState
 	Player PlayerController
-	Logger log.Logger
+	Logger *log.Logger
 }
 
 // guiState stores internal state of resources
@@ -24,7 +24,7 @@ type uiState struct {
 	idxView      int
 }
 
-func NewGui() (*UI, error) {
+func NewUI() (*UI, error) {
 	fmt.Println("Creating app")
 
 	initialState := uiState{
@@ -37,6 +37,7 @@ func NewGui() (*UI, error) {
 		State:  initialState,
 		Player: mpvPlayer,
 	}
+	ui.Logger = GetLoggerInstance()
 
 	return ui, nil
 
@@ -48,13 +49,18 @@ func (ui *UI) Teardown() {
 
 }
 
+func (ui *UI) log(msgs ...interface{}) {
+	ui.Logger.Println(msgs...)
+}
+
 func StartApp() {
 
-	gui, err := NewGui()
+	ui, err := NewUI()
 	if err != nil {
 		panic(err)
 	}
-	gui.Start()
+	ui.log("***************************")
+	ui.Start()
 
 }
 
@@ -63,6 +69,7 @@ func StartApp() {
 // by starting the gocui event loop
 func (ui *UI) Start() error {
 
+	ui.log("initializing player")
 	go ui.Player.Initialize()
 
 	g, err := gocui.NewGui(gocui.OutputNormal)

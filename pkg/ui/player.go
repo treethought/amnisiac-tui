@@ -30,9 +30,10 @@ type MPVController struct {
 	client  *mpv.Client
 	queue   map[int]t.Item
 	process *exec.Cmd
+	logger  *log.Logger
 }
 
-// NewMPVController creates a new instance of an MPV Client satisfying the PlaerController interface
+// NewMPVController creates a new instance of an MPV Client satisfying the PlayerController interface
 func NewMPVController() *MPVController {
 	m := MPVController{
 		queue: map[int]t.Item{},
@@ -42,6 +43,7 @@ func NewMPVController() *MPVController {
 }
 
 func (m *MPVController) Initialize() error {
+	m.logger = GetLoggerInstance()
 	process, err := StartMPV()
 	if err != nil {
 		return err
@@ -66,6 +68,7 @@ func (m *MPVController) Shutdown() error {
 }
 
 func (m *MPVController) PlayTrack(item *t.Item) error {
+	m.logger.Println("Playing track", item.RawTitle)
 
 	err := m.client.Loadfile(item.URL, mpv.LoadFileModeReplace)
 	if err != nil {
@@ -91,6 +94,7 @@ func (m *MPVController) TogglePause() error {
 
 	return err
 }
+	m.logger.Println("Pausing current track", m.status.currentItem)
 
 func (m *MPVController) GetPosition() (int32, error) {
 	return 0, nil

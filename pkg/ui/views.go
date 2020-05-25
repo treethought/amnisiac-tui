@@ -12,6 +12,7 @@ func (ui *UI) renderResultsView(g *gocui.Gui) error {
 			return err
 		}
 
+		ui.log("creating results view")
 		v.Clear()
 		v.Highlight = true
 		v.Wrap = false
@@ -36,6 +37,7 @@ func (ui *UI) renderStatusView(g *gocui.Gui) error {
 		if err != gocui.ErrUnknownView {
 			return err
 		}
+		ui.log("creating Status view")
 		v.Clear()
 		v.Wrap = true
 		v.Editable = true
@@ -61,6 +63,7 @@ func (ui *UI) renderLogView(g *gocui.Gui) error {
 			return err
 		}
 
+		ui.log("creating log view")
 		v.Frame = true
 		v.Title = "Log"
 		v.Highlight = false
@@ -86,6 +89,7 @@ func (ui *UI) renderSubredditView(g *gocui.Gui) error {
 			return err
 		}
 
+		ui.log("creating subreddits view")
 		v.Frame = true
 		v.Title = "Subreddits"
 		v.Highlight = true
@@ -101,6 +105,7 @@ func (ui *UI) renderSubredditView(g *gocui.Gui) error {
 }
 
 func (ui *UI) nextView(disableCurrent bool) error {
+	ui.log("switching to next view")
 	next := ui.State.curView + 1
 	if next > len(ui.State.views)-1 {
 		next = 0

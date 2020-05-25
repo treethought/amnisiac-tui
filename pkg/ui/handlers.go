@@ -1,12 +1,16 @@
 package ui
 
-import "github.com/jroimartin/gocui"
+import (
+	"github.com/jroimartin/gocui"
+)
 
 func (ui *UI) SelectTrack(gui *gocui.Gui, v *gocui.View) error {
 
 	selectedLine := ui.GetSelectedContent(v)
 
 	item := ui.State.ResultBuffer[selectedLine]
+
+	ui.log("Selected track: ", item.RawTitle)
 
 	err := ui.Player.PlayTrack(item)
 	if err != nil {
