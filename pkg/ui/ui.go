@@ -166,6 +166,10 @@ func (ui *UI) Layout(g *gocui.Gui) error {
 		log.Panicln(err)
 	}
 
+	if err := ui.renderProgressBar(g); err != nil {
+		log.Panicln(err)
+	}
+
 	return nil
 
 }

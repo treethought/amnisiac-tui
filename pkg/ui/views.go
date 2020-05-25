@@ -2,6 +2,7 @@ package ui
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/jroimartin/gocui"
 )
@@ -10,7 +11,7 @@ func (ui *UI) renderResultsView(g *gocui.Gui) error {
 	maxX, maxY := g.Size()
 	name := "search_results"
 
-	v, err := g.SetView(name, 1, 5, maxX-30, maxY-5)
+	v, err := g.SetView(name, 1, 5, maxX-30, maxY-7)
 	if err != nil {
 		if err != gocui.ErrUnknownView {
 			return err
@@ -33,8 +34,10 @@ func (ui *UI) renderResultsView(g *gocui.Gui) error {
 }
 
 func (ui *UI) buildStatusMessage() (string, error) {
+	// ui.log("getting player status")
 	status := ui.Player.GetStatus()
 	item := status.currentItem
+	// ui.log(status)
 	if item == nil {
 		return "...", nil
 	}
@@ -51,11 +54,60 @@ func (ui *UI) buildStatusMessage() (string, error) {
 
 }
 
+func (ui *UI) buildProgressBar(v *gocui.View) {
+	width, _ := v.Size()
+	status := ui.Player.GetStatus()
+	if status.currentItem == nil {
+		return
+
+	}
+	position := status.currentPosition
+	duration := status.currentDuration
+
+	if int(duration) == 0 {
+		ui.log("Duration 0, skipping bar")
+		return
+	}
+
+	progressPercent := position / duration
+
+	var barPosition float64
+
+	barPosition = float64(width) * progressPercent
+
+	barChars := strings.Repeat("+", int(barPosition))
+	v.Clear()
+	fmt.Fprintln(v, barChars)
+
+}
+
+func (ui *UI) renderProgressBar(g *gocui.Gui) error {
+	maxX, maxY := ui.g.Size()
+	name := "progress_bar"
+
+	v, err := ui.g.SetView(name, 1, maxY-3, maxX-30, maxY-1)
+	if err != nil {
+		if err != gocui.ErrUnknownView {
+			return err
+		}
+		ui.log("creating progress bar")
+		v.Clear()
+		v.Wrap = false
+		v.Editable = false
+		v.Frame = true
+
+	}
+	v.Clear()
+	ui.buildProgressBar(v)
+
+	return nil
+}
+
 func (ui *UI) renderStatusView(g *gocui.Gui) error {
 	maxX, maxY := ui.g.Size()
 	name := "status_view"
 
-	v, err := ui.g.SetView(name, 1, maxY-3, maxX-30, maxY-1)
+	v, err := ui.g.SetView(name, 1, maxY-6, maxX-30, maxY-4)
 	if err != nil {
 		if err != gocui.ErrUnknownView {
 			return err
