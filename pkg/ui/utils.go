@@ -1,7 +1,6 @@
 package ui
 
 import (
-	// "strings"
 	"fmt"
 
 	"github.com/jroimartin/gocui"
@@ -44,14 +43,7 @@ func cursorUp(g *gocui.Gui, v *gocui.View) error {
 
 // writeLog writes the message to the log UI view
 func (ui *UI) writeLog(a ...interface{}) error {
-
-	v, err := ui.g.View("log_view")
-	if err != nil {
-		return err
-	}
-	fmt.Fprintln(v, a...)
-	ui.updateUI()
-
+	ui.log(a...)
 	return nil
 
 }
