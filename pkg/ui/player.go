@@ -57,13 +57,22 @@ func NewMPVController() *MPVController {
 
 }
 
+func (m *MPVController) log(msgs ...interface{}) {
+	m.logger.Println(msgs...)
+
+}
+
 func (m *MPVController) Initialize() error {
 	m.logger = GetLoggerInstance()
+
+	m.log("Starting MPV process")
 	process, err := StartMPV()
 	if err != nil {
-		return err
+		panic(err)
 	}
 	m.process = process
+
+	m.log("initializing clients")
 	ipcc := mpv.NewIPCClient("/tmp/mpvsocket") // Lowlevel client
 	c := mpv.NewClient(ipcc)                   // Highlevel client, can also use RPCClient
 	m.client = c
@@ -82,7 +91,7 @@ func (m *MPVController) Shutdown() error {
 }
 
 func (m *MPVController) PlayTrack(item *t.Item) error {
-	m.logger.Println("Playing track", item.RawTitle)
+	m.log("Playing track", item.RawTitle)
 
 	err := m.client.Loadfile(item.URL, mpv.LoadFileModeReplace)
 	if err != nil {
@@ -96,17 +105,19 @@ func (m *MPVController) PlayTrack(item *t.Item) error {
 }
 
 func (m *MPVController) TogglePause() error {
-	m.logger.Println("Pausing current track", m.status.currentItem)
+	m.log("Pausing current track", m.status.currentItem)
 	paused, err := m.client.Pause()
 	if err != nil {
 		return err
 	}
 	if paused {
 		err := m.client.SetPause(false)
+		m.status.playState = "playing"
 		return err
 
 	} else {
 		err := m.client.SetPause(true)
+		m.status.playState = "paused"
 		return err
 	}
 
@@ -122,7 +133,39 @@ func (m *MPVController) QueueTrack(item *t.Item) error {
 }
 
 func (m *MPVController) GetStatus() PlayerStatus {
-	m.logger.Println("building status")
+	if m.client == nil {
+		m.log("Client not ready")
+		return m.status
+	}
+
+	paused, err := m.client.Pause()
+	if err != nil {
+		m.log("Failed to get playing state!!")
+		m.log("Player error: ", err.Error())
+	}
+	if paused {
+		m.status.playState = "paused"
+
+	} else {
+		m.status.playState = "playing"
+	}
+
+	pos, err := m.GetPosition()
+	if err != nil {
+		m.log("Failed to get position!!")
+		m.log("Player error: ", err.Error())
+	} else {
+		m.status.currentPosition = pos
+	}
+
+	l, err := m.client.Duration()
+	if err != nil {
+		m.log("Failed to get duration!!")
+		m.log("Player error: ", err.Error())
+	} else {
+
+		m.status.currentDuration = l
+	}
 
 	return m.status
 
