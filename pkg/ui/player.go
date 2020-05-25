@@ -24,19 +24,28 @@ type PlayerController interface {
 	TogglePause() error
 	GetPosition() (int32, error)
 	Seek(int32) error
+type PlayerStatus struct {
+	currentItem          *t.Item
+	currentPosition      float64
+	currentDuration      float64
+	currentQueuePosition int
+	currentQueue         map[int]t.Item
+	playState            string
 }
 
 type MPVController struct {
 	client  *mpv.Client
 	queue   map[int]t.Item
 	process *exec.Cmd
+	status  PlayerStatus
 	logger  *log.Logger
 }
 
 // NewMPVController creates a new instance of an MPV Client satisfying the PlayerController interface
 func NewMPVController() *MPVController {
 	m := MPVController{
-		queue: map[int]t.Item{},
+		queue:  map[int]t.Item{},
+		status: PlayerStatus{},
 	}
 	return &m
 
@@ -74,6 +83,9 @@ func (m *MPVController) PlayTrack(item *t.Item) error {
 	if err != nil {
 		return err
 	}
+	m.status.currentItem = item
+	m.status.playState = "playing"
+
 	return nil
 
 }
