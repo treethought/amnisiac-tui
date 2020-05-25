@@ -1,10 +1,12 @@
 package ui
 
 import (
-	"github.com/blang/mpv"
-	t "github.com/treethought/amnisiac/pkg/types"
+	"log"
 	"os"
 	"os/exec"
+
+	"github.com/blang/mpv"
+	t "github.com/treethought/amnisiac/pkg/types"
 )
 
 // StartMPV starts mpv in idle mode and specifies the ipc socket
@@ -22,8 +24,12 @@ type PlayerController interface {
 	Shutdown() error
 	PlayTrack(item *t.Item) error
 	TogglePause() error
-	GetPosition() (int32, error)
-	Seek(int32) error
+	GetPosition() (float64, error)
+	Seek(int) error
+	QueueTrack(item *t.Item) error
+	GetStatus() PlayerStatus
+}
+
 type PlayerStatus struct {
 	currentItem          *t.Item
 	currentPosition      float64
@@ -67,7 +73,6 @@ func (m *MPVController) Initialize() error {
 }
 
 func (m *MPVController) Shutdown() error {
-
 	err := m.process.Process.Signal(os.Kill)
 	if err != nil {
 		return err
@@ -91,27 +96,42 @@ func (m *MPVController) PlayTrack(item *t.Item) error {
 }
 
 func (m *MPVController) TogglePause() error {
-    paused, err := m.client.Pause()
-    if err != nil {
-        return err
-    }
-    if paused {
-        err := m.client.SetPause(false)
-        return err
-        
-    } else {
-        err := m.client.SetPause(true)
-        return err
-    }
-
-	return err
-}
 	m.logger.Println("Pausing current track", m.status.currentItem)
+	paused, err := m.client.Pause()
+	if err != nil {
+		return err
+	}
+	if paused {
+		err := m.client.SetPause(false)
+		return err
 
-func (m *MPVController) GetPosition() (int32, error) {
-	return 0, nil
+	} else {
+		err := m.client.SetPause(true)
+		return err
+	}
+
 }
 
-func (m *MPVController) Seek(int32) error {
+func (m *MPVController) QueueTrack(item *t.Item) error {
+	err := m.client.Loadfile(item.URL, mpv.LoadFileModeAppendPlay)
+	if err != nil {
+		return err
+	}
+
 	return nil
+}
+
+func (m *MPVController) GetStatus() PlayerStatus {
+	m.logger.Println("building status")
+
+	return m.status
+
+}
+
+func (m *MPVController) GetPosition() (float64, error) {
+	return m.client.Position()
+}
+
+func (m *MPVController) Seek(pos int) error {
+	return m.client.Seek(pos, mpv.SeekModeAbsolute)
 }
