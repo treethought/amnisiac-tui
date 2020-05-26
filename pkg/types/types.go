@@ -4,7 +4,7 @@ import (
 	// "fmt"
 
 	"github.com/jzelinskie/geddit"
-	"github.com/satori/go.uuid"
+	uuid "github.com/satori/go.uuid"
 	"github.com/yanatan16/golang-soundcloud/soundcloud"
 )
 
@@ -21,7 +21,7 @@ type Item struct {
 	StreamURL       string `json:"stream_url"`
 	Duration        string `json:"duration"`
 	ArtworkURL      string `json:"artwork_url"`
-	streamable      bool   `json:"streamable"`
+	Streamable      bool   `json:"streamable"`
 	Genre           string `json:"genre"`
 
 	// DatePublished string

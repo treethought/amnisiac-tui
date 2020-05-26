@@ -84,12 +84,12 @@ func SubRedditsFromWiki(subreddit string, wikiname string) (subreddits []string,
 
 }
 
-func FetchItemsFromReddit(query string) (reddit_items []types.Item, err error) {
+func FetchItemsFromReddit(query string) (reddit_items []*types.Item, err error) {
 	subreddits, _ := SubRedditsFromWiki("Music", "musicsubreddits")
 	var submissions []*geddit.Submission
 	for _, s := range subreddits {
 		if strings.Contains(s, query) {
-            // log.Println("fetching", s)
+			// log.Println("fetching", s)
 			posts, _ := FetchSubmissions(s)
 			for _, p := range posts {
 				if IsMediaURL(p.URL) {
@@ -104,7 +104,7 @@ func FetchItemsFromReddit(query string) (reddit_items []types.Item, err error) {
 			panic(err)
 		}
 
-		reddit_items = append(reddit_items, item)
+		reddit_items = append(reddit_items, &item)
 	}
 	return reddit_items, nil
 

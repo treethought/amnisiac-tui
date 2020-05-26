@@ -2,72 +2,83 @@ package ui
 
 import (
 	"fmt"
-	"github.com/jroimartin/gocui"
+
 	r "github.com/treethought/amnisiac/pkg/reddit"
+	"github.com/treethought/amnisiac/pkg/types"
+	t "github.com/treethought/amnisiac/pkg/types"
 )
 
-func doSearch(g *gocui.Gui, v *gocui.View) (err error) {
-
-    sub_v, err := g.View("sub_list")
-    if err != nil {
-        return err
-    }
-
-    selectedSub := GetSelectedContent(g, sub_v)
-
-
-    sv, err := g.View("status_view")
-    if err != nil {
-        return err
-    }
-    fmt.Fprintln(sv, "Fetching items from", selectedSub)
-
-
-	items, err := r.FetchItemsFromReddit(selectedSub)
+func (ui *UI) searchAndDisplayResults(subreddits ...string) error {
+	ui.writeLog("Fetching items from", subreddits)
+	v, err := ui.g.View("search_results")
 	if err != nil {
 		return err
 	}
+	v.Clear()
+	fmt.Fprintln(v, "Fetching...")
+	ui.updateUI()
 
-	return populateSearchResults(g, items)
-
-}
-
-
-
-
-func statusView(g *gocui.Gui) error {
-	maxX, _ := g.Size()
-	name := "status_view"
-	v, err := g.SetView(name, 0, 0, maxX-30, 2)
-	if err != nil {
-		if err != gocui.ErrUnknownView {
+	var items []*types.Item
+	for _, s := range subreddits {
+		subItems, err := r.FetchItemsFromReddit(s)
+		if err != nil {
 			return err
 		}
-		v.Clear()
-		v.Wrap = true
-		v.Editable = true
-		v.Frame = true
+		for _, s := range subItems {
+			items = append(items, s)
+		}
+
+		ui.writeLog("got items, populating")
+		ui.populateSearchResults(items)
 
 	}
-
-	if _, err := g.SetCurrentView(name); err != nil {
-		return err
-	}
-
-	views = append(views, name)
-	curView = len(views) - 1
-	idxView += 1
-
 	return nil
 }
 
-func simpleEditor(v *gocui.View, key gocui.Key, ch rune, mod gocui.Modifier) {
-	switch {
-	case ch != 0 && mod == 0:
-		v.EditWrite(ch)
-	case key == gocui.KeySpace:
-		v.EditWrite(' ')
-	case key == gocui.KeyBackspace || key == gocui.KeyBackspace2:
-		v.EditDelete(true)
+func (ui *UI) populateSubredditListing() error {
+	v, err := ui.g.View("sub_list")
+	if err != nil {
+		return err
 	}
+	fmt.Fprintln(v, "Loading....")
+	ui.updateUI()
+
+	subs, err := r.SubRedditsFromWiki("Music", "musicsubreddits")
+	if err != nil {
+		ui.writeLog("Failed to fetch subs", err)
+	}
+	ui.writeLog("Subreddits retrieved")
+	ui.updateUI()
+	v.Clear()
+	for _, sub := range subs {
+		fmt.Fprintln(v, sub)
+	}
+	ui.updateUI()
+	return err
+
+}
+
+// populateSearchResults replaces the results buffer with the current search results
+func (ui *UI) populateSearchResults(results []*t.Item) error {
+	ui.writeLog("populating search results")
+	maxX, maxY := ui.g.Size()
+	name := "search_results"
+
+	v, err := ui.g.SetView(name, 0, 5, maxX-50, maxY-5)
+	if err != nil {
+		return err
+	}
+
+	v.Clear()
+	for _, item := range results {
+		fmt.Fprintln(v, item.RawTitle)
+		ui.State.ResultBuffer[item.RawTitle] = item
+	}
+
+	ui.updateUI()
+	if _, err := ui.g.SetCurrentView(name); err != nil {
+		return err
+	}
+
+	return nil
 }

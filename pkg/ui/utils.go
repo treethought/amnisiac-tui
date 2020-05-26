@@ -1,15 +1,16 @@
 package ui
 
 import (
-    // "strings"
+	"fmt"
+
 	"github.com/jroimartin/gocui"
 )
 
-func GetSelectedContent(g *gocui.Gui, v *gocui.View) string {
-    _, cy := v.Cursor()
+func (ui *UI) GetSelectedContent(v *gocui.View) string {
+	_, cy := v.Cursor()
 
 	lines := v.ViewBufferLines()
-    selectedLine := lines[cy]
+	selectedLine := lines[cy]
 
 	return selectedLine
 }
@@ -38,4 +39,30 @@ func cursorUp(g *gocui.Gui, v *gocui.View) error {
 		}
 	}
 	return nil
+}
+
+// writeLog writes the message to the log UI view
+func (ui *UI) writeLog(a ...interface{}) error {
+	ui.log(a...)
+	return nil
+
+}
+
+func (ui *UI) writeStatus(a ...interface{}) error {
+
+	v, err := ui.g.View("status_view")
+	if err != nil {
+		return err
+	}
+	fmt.Fprintln(v, a...)
+	ui.updateUI()
+
+	return nil
+
+}
+func secondsToMinutes(inSeconds int) string {
+	minutes := inSeconds / 60
+	seconds := inSeconds % 60
+	str := fmt.Sprintf("%d:%d", minutes, seconds)
+	return str
 }

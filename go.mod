@@ -19,10 +19,12 @@ require (
 	github.com/mattn/go-runewidth v0.0.8 // indirect
 	github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e // indirect
 	github.com/nsf/termbox-go v0.0.0-20200204031403-4d2b513ad8be // indirect
+	github.com/prometheus/client_golang v1.6.0 // indirect
 	github.com/saintfish/chardet v0.0.0-20120816061221-3af4cd4741ca // indirect
 	github.com/satori/go.uuid v1.2.0
 	github.com/temoto/robotstxt v1.1.1 // indirect
 	github.com/yanatan16/golang-soundcloud v0.0.0-20161013200625-a182dd459b66
+	github.com/yourok/go-mpv v0.0.0-20160721123233-ecdfd901e332
 	golang.org/x/net v0.0.0-20200301022130-244492dfa37a // indirect
 	golang.org/x/oauth2 v0.0.0-20200107190931-bf48bf16ab8d // indirect
 	google.golang.org/appengine v1.6.5 // indirect
