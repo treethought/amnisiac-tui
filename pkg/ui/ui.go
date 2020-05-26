@@ -6,6 +6,8 @@ import (
 	"time"
 
 	"github.com/jroimartin/gocui"
+	logger "github.com/treethought/amnisiac/pkg/logger"
+	player "github.com/treethought/amnisiac/pkg/player"
 	t "github.com/treethought/amnisiac/pkg/types"
 )
 
@@ -13,7 +15,7 @@ import (
 type UI struct {
 	g      *gocui.Gui
 	State  uiState
-	Player PlayerController
+	Player player.PlayerController
 	Logger *log.Logger
 }
 
@@ -32,13 +34,13 @@ func NewUI() (*UI, error) {
 		ResultBuffer: map[string]*t.Item{},
 	}
 
-	mpvPlayer := NewMPVController()
+	mpvPlayer := player.NewMPVController()
 
 	ui := &UI{
 		State:  initialState,
 		Player: mpvPlayer,
 	}
-	ui.Logger = GetLoggerInstance()
+	ui.Logger = logger.GetLoggerInstance()
 
 	return ui, nil
 
@@ -115,7 +117,9 @@ func (ui *UI) Start() error {
 	go ui.pollPlayerStatus()
 
 	if err := g.MainLoop(); err != nil && err != gocui.ErrQuit {
-		log.Panicln(err)
+		// log.Panicln(err)
+		return err
+
 	}
 	return nil
 

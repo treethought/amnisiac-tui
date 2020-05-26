@@ -60,3 +60,9 @@ func (ui *UI) writeStatus(a ...interface{}) error {
 	return nil
 
 }
+func secondsToMinutes(inSeconds int) string {
+	minutes := inSeconds / 60
+	seconds := inSeconds % 60
+	str := fmt.Sprintf("%d:%d", minutes, seconds)
+	return str
+}

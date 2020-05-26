@@ -1,4 +1,4 @@
-package ui
+package logger
 
 import (
 	"log"

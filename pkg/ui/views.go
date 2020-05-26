@@ -34,22 +34,18 @@ func (ui *UI) renderResultsView(g *gocui.Gui) error {
 }
 
 func (ui *UI) buildStatusMessage() (string, error) {
-	// ui.log("getting player status")
 	status := ui.Player.GetStatus()
-	item := status.currentItem
+	item := status.CurrentItem
+
+	statusMsg := ""
+
 	// ui.log(status)
-	if item == nil {
-		return "...", nil
+	if item != nil {
+		statusMsg += item.RawTitle
+		statusMsg += " (" + item.SourcePlatform + ")"
+		statusMsg += " (" + item.SubReddit + ")"
 	}
 
-	var progressMsg string
-
-	positionInt := int(status.currentPosition)
-	durationInt := int(status.currentDuration)
-
-	progressMsg = fmt.Sprintf("%d", positionInt) + "/" + fmt.Sprintf("%d", durationInt)
-
-	statusMsg := progressMsg + " -- " + item.RawTitle
 	return statusMsg, nil
 
 }
@@ -57,27 +53,38 @@ func (ui *UI) buildStatusMessage() (string, error) {
 func (ui *UI) buildProgressBar(v *gocui.View) {
 	width, _ := v.Size()
 	status := ui.Player.GetStatus()
-	if status.currentItem == nil {
+	if status.CurrentItem == nil {
 		return
 
 	}
-	position := status.currentPosition
-	duration := status.currentDuration
+	position := status.CurrentPosition
+	duration := status.CurrentDuration
 
 	if int(duration) == 0 {
-		ui.log("Duration 0, skipping bar")
 		return
 	}
 
 	progressPercent := position / duration
 
+	posFormatted := secondsToMinutes(int(position))
+	durationFormatted := secondsToMinutes(int(duration))
+
+	barContent := posFormatted
+
 	var barPosition float64
 
-	barPosition = float64(width) * progressPercent
+	// barspace occupies the view between the positon and duration
+	//
+	barMaxWidth := width - len(posFormatted) - len(durationFormatted)
+	barPosition = float64(barMaxWidth) * progressPercent
 
-	barChars := strings.Repeat("+", int(barPosition))
+	barChars := strings.Repeat("=", int(barPosition))
+	emptyChars := strings.Repeat(" ", (int(barMaxWidth) - int(barPosition)))
+
+	barContent += barChars + emptyChars + durationFormatted
+
 	v.Clear()
-	fmt.Fprintln(v, barChars)
+	fmt.Fprintln(v, barContent)
 
 }
 
@@ -118,10 +125,6 @@ func (ui *UI) renderStatusView(g *gocui.Gui) error {
 		v.Editable = true
 		v.Frame = true
 		v.Title = "Status"
-
-		ui.State.views = append(ui.State.views, name)
-		ui.State.curView = len(ui.State.views) - 1
-		ui.State.idxView += 1
 
 	}
 	v.Clear()

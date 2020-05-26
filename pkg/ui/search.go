@@ -10,6 +10,13 @@ import (
 
 func (ui *UI) searchAndDisplayResults(subreddits ...string) error {
 	ui.writeLog("Fetching items from", subreddits)
+	v, err := ui.g.View("search_results")
+	if err != nil {
+		return err
+	}
+	v.Clear()
+	fmt.Fprintln(v, "Fetching...")
+	ui.updateUI()
 
 	var items []*types.Item
 	for _, s := range subreddits {
@@ -68,7 +75,7 @@ func (ui *UI) populateSearchResults(results []*t.Item) error {
 		ui.State.ResultBuffer[item.RawTitle] = item
 	}
 
-	// ui.updateUI()
+	ui.updateUI()
 	if _, err := ui.g.SetCurrentView(name); err != nil {
 		return err
 	}
