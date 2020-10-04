@@ -1,179 +1,106 @@
 package ui
 
 import (
-	"fmt"
 	"log"
-	"time"
 
-	"github.com/jroimartin/gocui"
-	logger "github.com/treethought/amnisiac/pkg/logger"
-	player "github.com/treethought/amnisiac/pkg/player"
-	t "github.com/treethought/amnisiac/pkg/types"
+	"github.com/gdamore/tcell"
+	"github.com/rivo/tview"
+	"github.com/treethought/amnisiac/pkg/player"
 )
 
-// UI wraps the gocui Gui object which handles rendering and events
+// UI wraps the tview application which handles rendering and events
 type UI struct {
-	g      *gocui.Gui
-	State  uiState
-	Player player.PlayerController
-	Logger *log.Logger
+	// Underlying Gui object to render views
+	app *tview.Application
+
+	Widgets []WidgetRenderer
+	State   uiState
+	Player  player.PlayerController
+	Logger  *log.Logger
+	grid    *tview.Grid
 }
 
 // guiState stores internal state of resources
 type uiState struct {
-	ResultBuffer map[string]*t.Item
-	views        []string
-	curView      int
-	idxView      int
+	curView        int
+	selectedSource string
 }
 
-func NewUI() (*UI, error) {
-	fmt.Println("Creating app")
-
-	initialState := uiState{
-		ResultBuffer: map[string]*t.Item{},
+func NewApp() *UI {
+	tapp := tview.NewApplication()
+	app := &UI{
+		app: tapp,
 	}
 
-	mpvPlayer := player.NewMPVController()
+	return app
+}
+func newPrimitive(text string) tview.Primitive {
+	return tview.NewTextView().
+		SetTextAlign(tview.AlignCenter).
+		SetText(text)
+}
 
-	ui := &UI{
-		State:  initialState,
-		Player: mpvPlayer,
+func (ui *UI) render() {
+	for _, w := range ui.Widgets {
+		w.Render(ui.grid)
 	}
-	ui.Logger = logger.GetLoggerInstance()
-
-	return ui, nil
 
 }
 
-func (ui *UI) Teardown() {
-	ui.Player.Shutdown()
-	ui.g.Close()
+func (ui *UI) initWidgets() {
+	sources := NewSourceList(ui)
+	ui.Widgets = append(ui.Widgets, sources)
+
+	search := NewSearchBox(ui)
+	ui.Widgets = append(ui.Widgets, search)
+
+	status := NewStatus(ui)
+	ui.Widgets = append(ui.Widgets, status)
+
+	menu := newPrimitive("Menu")
+
+	ui.grid = tview.NewGrid().
+		SetRows(3, 0, 3).
+		SetColumns(30, 0, 30).
+		SetBorders(true)
+
+	ui.grid.AddItem(menu, 3, 0, 0, 1, 0, 0, false).
+		AddItem(sources.view, 1, 0, 1, 3, 0, 0, false).
+		AddItem(search.view, 0, 0, 1, 3, 0, 0, false).
+		AddItem(status.view, 0, 3, 1, 2, 0, 0, false)
+
+	ui.render()
+
+	ui.app.SetRoot(ui.grid, true).SetFocus(ui.grid)
+
+	ui.app.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+		switch event.Key() {
+		case tcell.KeyTAB:
+			if ui.State.curView == len(ui.Widgets)-1 {
+				ui.State.curView = -1
+			}
+			ui.State.curView += 1
+			widget := ui.Widgets[ui.State.curView]
+
+			ui.app.SetFocus(widget.View())
+			ui.render()
+
+			return nil
+
+		}
+
+		return event
+	})
 
 }
 
-func (ui *UI) log(msgs ...interface{}) {
-	ui.Logger.Println(msgs...)
-}
+func Start() {
 
-func StartApp() {
+	ui := NewApp()
+	ui.initWidgets()
 
-	ui, err := NewUI()
+	err := ui.app.Run()
 	if err != nil {
 		panic(err)
 	}
-	ui.log("***************************")
-	ui.Start()
-
-}
-
-func (ui *UI) pollPlayerStatus() {
-	ui.log("Starting status polling")
-	for {
-		time.Sleep(1 * time.Second)
-		ui.renderStatusView(ui.g)
-		ui.updateUI()
-	}
-}
-
-// Start initializes a player and builds the UI
-// serves as the entrypoint for the application
-// by starting the gocui event loop
-func (ui *UI) Start() error {
-
-	ui.log("initializing player")
-	go ui.Player.Initialize()
-
-	g, err := gocui.NewGui(gocui.OutputNormal)
-	if err != nil {
-		log.Panicln(err)
-	}
-
-	g.Highlight = true
-	g.SelFgColor = gocui.ColorCyan
-	g.Cursor = true
-	g.Mouse = true
-
-	ui.g = g
-	g.SetManager(ui)
-	ui.writeLog("Manager set")
-
-	if err := ui.initKeybindings(); err != nil {
-		log.Panicln(err)
-	}
-
-	defer ui.Teardown()
-
-	err = ui.initializeLayout()
-	if err != nil {
-		return err
-	}
-	ui.writeLog("Layout initialized")
-
-	if _, err := ui.g.SetCurrentView("sub_list"); err != nil {
-		return err
-	}
-
-	go ui.pollPlayerStatus()
-
-	if err := g.MainLoop(); err != nil && err != gocui.ErrQuit {
-		// log.Panicln(err)
-		return err
-
-	}
-	return nil
-
-}
-
-func (ui *UI) initializeLayout() error {
-	ui.writeLog("Initializing layout state")
-
-	// render the base state
-	ui.Layout(ui.g)
-
-	var emptyResult []*t.Item
-
-	if err := ui.populateSearchResults(emptyResult); err != nil {
-		log.Panicln(err)
-	}
-
-	go ui.populateSubredditListing()
-
-	ui.writeLog("UI initialized")
-	return nil
-}
-
-// updateUI forces a redraw of the views
-// wrapper for *gocui.Gui.Update that must be called when
-// changes are made that do not result from keybindings
-func (ui *UI) updateUI() {
-	ui.g.Update(ui.Layout)
-}
-
-// Layout updates the UI and keybindings on each event.
-// This method allows UI to satisfy the gocui.Manager interface
-// while wrapping the render updates with updating of app state
-func (ui *UI) Layout(g *gocui.Gui) error {
-
-	if err := ui.renderResultsView(g); err != nil {
-		log.Panicln(err)
-	}
-
-	if err := ui.renderStatusView(g); err != nil {
-		log.Panicln(err)
-	}
-
-	if err := ui.renderLogView(g); err != nil {
-		log.Panicln(err)
-	}
-	if err := ui.renderSubredditView(g); err != nil {
-		log.Panicln(err)
-	}
-
-	if err := ui.renderProgressBar(g); err != nil {
-		log.Panicln(err)
-	}
-
-	return nil
-
 }

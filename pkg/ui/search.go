@@ -1,84 +1,29 @@
 package ui
 
-import (
-	"fmt"
+import "github.com/rivo/tview"
 
-	r "github.com/treethought/amnisiac/pkg/reddit"
-	"github.com/treethought/amnisiac/pkg/types"
-	t "github.com/treethought/amnisiac/pkg/types"
-)
-
-func (ui *UI) searchAndDisplayResults(subreddits ...string) error {
-	ui.writeLog("Fetching items from", subreddits)
-	v, err := ui.g.View("search_results")
-	if err != nil {
-		return err
-	}
-	v.Clear()
-	fmt.Fprintln(v, "Fetching...")
-	ui.updateUI()
-
-	var items []*types.Item
-	for _, s := range subreddits {
-		subItems, err := r.FetchItemsFromReddit(s)
-		if err != nil {
-			return err
-		}
-		for _, s := range subItems {
-			items = append(items, s)
-		}
-
-		ui.writeLog("got items, populating")
-		ui.populateSearchResults(items)
-
-	}
-	return nil
+type SearchBox struct {
+	Widget
+	view *tview.InputField
 }
 
-func (ui *UI) populateSubredditListing() error {
-	v, err := ui.g.View("sub_list")
-	if err != nil {
-		return err
-	}
-	fmt.Fprintln(v, "Loading....")
-	ui.updateUI()
+func NewSearchBox(app *UI) (w *SearchBox) {
+	w = &SearchBox{}
+	w.app = app
+	w.Name = "Search"
 
-	subs, err := r.SubRedditsFromWiki("Music", "musicsubreddits")
-	if err != nil {
-		ui.writeLog("Failed to fetch subs", err)
-	}
-	ui.writeLog("Subreddits retrieved")
-	ui.updateUI()
-	v.Clear()
-	for _, sub := range subs {
-		fmt.Fprintln(v, sub)
-	}
-	ui.updateUI()
-	return err
+	w.view = tview.NewInputField()
+	w.view.SetTitle("Search please")
+
+	return
 
 }
 
-// populateSearchResults replaces the results buffer with the current search results
-func (ui *UI) populateSearchResults(results []*t.Item) error {
-	ui.writeLog("populating search results")
-	maxX, maxY := ui.g.Size()
-	name := "search_results"
+func (w *SearchBox) View() tview.Primitive {
+	return w.view
+}
 
-	v, err := ui.g.SetView(name, 0, 5, maxX-50, maxY-5)
-	if err != nil {
-		return err
-	}
-
-	v.Clear()
-	for _, item := range results {
-		fmt.Fprintln(v, item.RawTitle)
-		ui.State.ResultBuffer[item.RawTitle] = item
-	}
-
-	ui.updateUI()
-	if _, err := ui.g.SetCurrentView(name); err != nil {
-		return err
-	}
-
+func (w *SearchBox) Render(g *tview.Grid) error {
+	w.view.SetTitle("Search please")
 	return nil
 }
