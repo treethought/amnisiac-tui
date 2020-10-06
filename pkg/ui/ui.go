@@ -6,6 +6,7 @@ import (
 	"github.com/gdamore/tcell"
 	"github.com/rivo/tview"
 	"github.com/treethought/amnisiac/pkg/player"
+	"github.com/treethought/amnisiac/pkg/types"
 )
 
 // UI wraps the tview application which handles rendering and events
@@ -24,6 +25,7 @@ type UI struct {
 type uiState struct {
 	curView        int
 	selectedSource string
+	resultItems    []*types.Item
 }
 
 func NewApp() *UI {
@@ -57,6 +59,9 @@ func (ui *UI) initWidgets() {
 	status := NewStatus(ui)
 	ui.Widgets = append(ui.Widgets, status)
 
+	results := NewItemList(ui)
+	ui.Widgets = append(ui.Widgets, results)
+
 	menu := newPrimitive("Menu")
 
 	ui.grid = tview.NewGrid().
@@ -65,8 +70,9 @@ func (ui *UI) initWidgets() {
 		SetBorders(true)
 
 	ui.grid.AddItem(menu, 3, 0, 0, 1, 0, 0, false).
-		AddItem(sources.view, 1, 0, 1, 3, 0, 0, false).
+		AddItem(sources.view, 1, 3, 3, 2, 0, 0, false).
 		AddItem(search.view, 0, 0, 1, 3, 0, 0, false).
+		AddItem(results.view, 1, 0, 2, 3, 0, 0, false).
 		AddItem(status.view, 0, 3, 1, 2, 0, 0, false)
 
 	ui.render()
