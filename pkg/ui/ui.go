@@ -33,6 +33,8 @@ func NewApp() *UI {
 	app := &UI{
 		app: tapp,
 	}
+	app.Player = player.NewMPVController()
+	go app.Player.Initialize()
 
 	return app
 }

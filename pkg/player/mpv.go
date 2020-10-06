@@ -1,6 +1,7 @@
 package player
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"os/exec"
@@ -54,6 +55,7 @@ func StartMPV() (*exec.Cmd, error) {
 	if err != nil {
 		panic(err)
 	}
+	fmt.Println("MPV started")
 	return cmd, nil
 }
 
