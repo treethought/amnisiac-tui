@@ -82,12 +82,6 @@ func (m *MPVController) Initialize() error {
 
 	// m.log("Started mpv PID: ", m.process.Pid)
 
-	createSocketFile()
-	m.log("initializing clients")
-	if r := recover(); r != nil {
-		m.log("Recovered in f", r)
-
-	}
 	ipcc := mpv.NewIPCClient("/tmp/mpvsocket") // Lowlevel client
 	c := mpv.NewClient(ipcc)                   // Highlevel client, can also use RPCClient
 	m.client = c
