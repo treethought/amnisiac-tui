@@ -1,8 +1,6 @@
 package ui
 
-import (
-	"github.com/rivo/tview"
-)
+import "gitlab.com/tslocum/cview"
 
 type Widget struct {
 	app  *UI
@@ -10,6 +8,6 @@ type Widget struct {
 }
 
 type WidgetRenderer interface {
-	Render(grid *tview.Grid) error
-	View() tview.Primitive
+	Render(grid *cview.Grid) error
+	View() cview.Primitive
 }

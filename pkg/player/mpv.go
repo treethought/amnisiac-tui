@@ -43,14 +43,15 @@ func createSocketFile() error {
 			log.Fatal(err)
 		}
 	}
+
 	return nil
 }
 
 // StartMPV starts mpv in idle mode and specifies the ipc socket
 func StartMPV() (*exec.Cmd, error) {
 	createSocketFile()
-	cmd := exec.Command("mpv", "--idle=once", "--no-terminal", "--input-ipc-server=/tmp/mpvsocket", "--no-video", "--no-config")
-	// cmd := exec.Command("mpv", "--idle", "--input-ipc-server=/tmp/mpvsocket")
+	// cmd := exec.Command("mpv", "--idle=once", "--no-terminal", "--input-ipc-server=/tmp/mpvsocket", "--no-video", "--no-config")
+	cmd := exec.Command("mpv", "--idle", "--input-ipc-server=/tmp/mpvsocket")
 	err := cmd.Start()
 	if err != nil {
 		panic(err)
@@ -110,8 +111,10 @@ func (m *MPVController) PlayTrack(item *t.Item) error {
 
 	err := m.client.Loadfile(item.URL, mpv.LoadFileModeReplace)
 	if err != nil {
+		m.logger.Printf("Failed to play track %s", err.Error())
 		return err
 	}
+	m.logger.Println("Track loaded")
 	m.status.CurrentItem = item
 	m.status.PlayState = "playing"
 

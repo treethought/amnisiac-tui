@@ -1,9 +1,12 @@
 package ui
 
 import (
-	"github.com/gdamore/tcell"
-	"github.com/rivo/tview"
+	"fmt"
+	"log"
+
+	"github.com/gdamore/tcell/v2"
 	"github.com/treethought/amnisiac/pkg/types"
+	"gitlab.com/tslocum/cview"
 )
 
 type Item struct {
@@ -12,7 +15,7 @@ type Item struct {
 
 type ItemList struct {
 	Widget
-	view  *tview.List
+	view  *cview.List
 	items []types.Item
 }
 
@@ -21,25 +24,27 @@ func NewItemList(app *UI) *ItemList {
 	w.app = app
 	w.Name = "Items"
 
-	w.view = tview.NewList()
+	w.view = cview.NewList()
 
 	w.view.SetTitle("Items")
-	w.view.AddItem("Testing", "test", '-', nil)
 	w.view.SetInputCapture(w.HandleInput)
 
 	return w
 }
 
-func (w *ItemList) View() tview.Primitive {
+func (w *ItemList) View() cview.Primitive {
 	return w.view
 
 }
 
-func (w *ItemList) Render(g *tview.Grid) (err error) {
+func (w *ItemList) Render(g *cview.Grid) (err error) {
 	w.view.Clear()
 
-	for i, item := range w.app.State.resultItems {
-		w.view.AddItem(item.RawTitle, item.Domain, rune(i), nil)
+	for _, item := range w.app.State.resultItems {
+		li := cview.NewListItem(item.RawTitle)
+		li.SetSecondaryText(item.Domain)
+		li.SetReference(item)
+		w.view.AddItem(li)
 	}
 	return
 
@@ -52,13 +57,20 @@ func (w *ItemList) HandleInput(event *tcell.EventKey) *tcell.EventKey {
 	switch key {
 	case tcell.KeyEnter:
 		cur := w.view.GetCurrentItem()
-		item := w.app.State.resultItems[cur]
+		ref := cur.GetReference()
+		item, ok := ref.(*types.Item)
+		if !ok {
+			log.Fatal("selected item ref was not an item")
+		}
 
+		w.app.Logger.Printf("Selected item %s\n", item.RawTitle)
+
+		w.app.State.message = fmt.Sprintf("Playing %s", item.RawTitle)
 		err := w.app.Player.PlayTrack(item)
 		if err != nil {
 			panic(err)
 		}
-		return event
+		return nil
 
 	case tcell.KeyRune:
 		switch event.Rune() {
@@ -67,10 +79,10 @@ func (w *ItemList) HandleInput(event *tcell.EventKey) *tcell.EventKey {
 		case 'G': // End.
 			w.view.SetCurrentItem(-1)
 		case 'j': // Down.
-			cur := w.view.GetCurrentItem()
+			cur := w.view.GetCurrentItemIndex()
 			w.view.SetCurrentItem(cur + 1)
 		case 'k': // Up.
-			cur := w.view.GetCurrentItem()
+			cur := w.view.GetCurrentItemIndex()
 			w.view.SetCurrentItem(cur - 1)
 		}
 

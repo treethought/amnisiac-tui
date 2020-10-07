@@ -3,12 +3,12 @@ package ui
 import (
 	"fmt"
 
-	"github.com/rivo/tview"
+	"gitlab.com/tslocum/cview"
 )
 
 type Status struct {
 	Widget
-	view *tview.TextView
+	view *cview.TextView
 }
 
 func NewStatus(app *UI) *Status {
@@ -16,7 +16,7 @@ func NewStatus(app *UI) *Status {
 	w.app = app
 	w.Name = "Status"
 
-	w.view = tview.NewTextView()
+	w.view = cview.NewTextView()
 
 	w.view.SetTitle("Status")
 	w.view.SetText("Greeting")
@@ -24,14 +24,15 @@ func NewStatus(app *UI) *Status {
 	return w
 }
 
-func (w *Status) View() tview.Primitive {
+func (w *Status) View() cview.Primitive {
 	return w.view
 }
 
-func (w *Status) Render(grid *tview.Grid) (err error) {
+func (w *Status) Render(grid *cview.Grid) (err error) {
 	w.view.Clear()
 
-	msg := fmt.Sprintf("source: %s | view: %d", w.app.State.selectedSource, w.app.State.curView)
+	statusMsg := w.app.State.message
+	msg := fmt.Sprintf("source: %s | view: %d\n%s", w.app.State.selectedSource, w.app.State.curView, statusMsg)
 	w.view.SetText(msg)
 	return
 

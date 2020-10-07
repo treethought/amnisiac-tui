@@ -3,9 +3,9 @@ package ui
 import (
 	"log"
 
-	"github.com/gdamore/tcell"
-	"github.com/rivo/tview"
+	"github.com/gdamore/tcell/v2"
 	"github.com/treethought/amnisiac/pkg/reddit"
+	"gitlab.com/tslocum/cview"
 )
 
 type SourceItem struct {
@@ -16,7 +16,7 @@ type SourceItem struct {
 type SourceList struct {
 	Widget
 	items []string
-	view  *tview.List
+	view  *cview.List
 }
 
 func NewSourceList(app *UI) *SourceList {
@@ -24,13 +24,8 @@ func NewSourceList(app *UI) *SourceList {
 	w.app = app
 	w.Name = "Sources"
 
-	subs, err := reddit.SubRedditsFromWiki("Music", "musicsubreddits")
-	if err != nil {
-		log.Fatal(err)
-	}
-	w.items = subs
-
-	w.view = tview.NewList()
+	go w.fetchSubs()
+	w.view = cview.NewList()
 
 	w.view.SetTitle("Sources")
 	w.view.SetInputCapture(w.HandleInput)
@@ -39,10 +34,20 @@ func NewSourceList(app *UI) *SourceList {
 	return w
 }
 
+func (w *SourceList) fetchSubs() {
+	subs, err := reddit.SubRedditsFromWiki("Music", "musicsubreddits")
+	if err != nil {
+		log.Fatal(err)
+	}
+	w.app.State.sources = subs
+
+}
+
 func (w *SourceList) fetchItems() error {
 
-	idx := w.view.GetCurrentItem()
-	s, _ := w.view.GetItemText(idx)
+	selected := w.view.GetCurrentItem()
+	s := selected.GetMainText()
+
 	items, err := reddit.FetchItemsFromReddit(s)
 	if err != nil {
 		return err
@@ -53,14 +58,15 @@ func (w *SourceList) fetchItems() error {
 
 }
 
-func (w *SourceList) View() tview.Primitive {
+func (w *SourceList) View() cview.Primitive {
 	return w.view
 }
 
-func (w *SourceList) Render(grid *tview.Grid) (err error) {
+func (w *SourceList) Render(grid *cview.Grid) (err error) {
 	w.view.Clear()
-	for i, sub := range w.items {
-		w.view.AddItem(sub, "", rune(i), nil)
+	for _, sub := range w.app.State.sources {
+		item := cview.NewListItem(sub)
+		w.view.AddItem(item)
 
 	}
 
@@ -70,7 +76,6 @@ func (w *SourceList) Render(grid *tview.Grid) (err error) {
 
 func (w *SourceList) HandleInput(event *tcell.EventKey) *tcell.EventKey {
 
-	idx := w.view.GetCurrentItem()
 	key := event.Key()
 	switch key {
 	case tcell.KeyEnter:
@@ -79,7 +84,8 @@ func (w *SourceList) HandleInput(event *tcell.EventKey) *tcell.EventKey {
 			panic(err)
 		}
 
-		s, _ := w.view.GetItemText(idx)
+		selected := w.view.GetCurrentItem()
+		s := selected.GetMainText()
 		w.app.State.selectedSource = s
 		w.app.render()
 
@@ -90,10 +96,10 @@ func (w *SourceList) HandleInput(event *tcell.EventKey) *tcell.EventKey {
 		case 'G': // End.
 			w.view.SetCurrentItem(-1)
 		case 'j': // Down.
-			cur := w.view.GetCurrentItem()
+			cur := w.view.GetCurrentItemIndex()
 			w.view.SetCurrentItem(cur + 1)
 		case 'k': // Up.
-			cur := w.view.GetCurrentItem()
+			cur := w.view.GetCurrentItemIndex()
 			w.view.SetCurrentItem(cur - 1)
 		}
 

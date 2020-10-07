@@ -3,22 +3,24 @@ package ui
 import (
 	"log"
 
-	"github.com/gdamore/tcell"
-	"github.com/rivo/tview"
+	"gitlab.com/tslocum/cview"
+
+	"github.com/gdamore/tcell/v2"
+	"github.com/treethought/amnisiac/pkg/logger"
 	"github.com/treethought/amnisiac/pkg/player"
 	"github.com/treethought/amnisiac/pkg/types"
 )
 
-// UI wraps the tview application which handles rendering and events
+// UI wraps the cview application which handles rendering and events
 type UI struct {
 	// Underlying Gui object to render views
-	app *tview.Application
+	app *cview.Application
 
 	Widgets []WidgetRenderer
 	State   uiState
 	Player  player.PlayerController
 	Logger  *log.Logger
-	grid    *tview.Grid
+	grid    *cview.Grid
 }
 
 // guiState stores internal state of resources
@@ -26,21 +28,26 @@ type uiState struct {
 	curView        int
 	selectedSource string
 	resultItems    []*types.Item
+	sources        []string
+	message        string
 }
 
 func NewApp() *UI {
-	tapp := tview.NewApplication()
+	tapp := cview.NewApplication()
 	app := &UI{
 		app: tapp,
 	}
 	app.Player = player.NewMPVController()
 	go app.Player.Initialize()
 
+	app.State.message = "greetings"
+	app.Logger = logger.GetLoggerInstance()
+
 	return app
 }
-func newPrimitive(text string) tview.Primitive {
-	return tview.NewTextView().
-		SetTextAlign(tview.AlignCenter).
+func newPrimitive(text string) cview.Primitive {
+	return cview.NewTextView().
+		SetTextAlign(cview.AlignCenter).
 		SetText(text)
 }
 
@@ -64,16 +71,18 @@ func (ui *UI) initWidgets() {
 	results := NewItemList(ui)
 	ui.Widgets = append(ui.Widgets, results)
 
-	menu := newPrimitive("Menu")
+	player := NewProgressBar(ui)
+	ui.Widgets = append(ui.Widgets, player)
 
-	ui.grid = tview.NewGrid().
+	ui.grid = cview.NewGrid().
 		SetRows(3, 0, 3).
 		SetColumns(30, 0, 30).
 		SetBorders(true)
 
-	ui.grid.AddItem(menu, 3, 0, 0, 1, 0, 0, false).
+	ui.grid.
 		AddItem(sources.view, 1, 3, 3, 2, 0, 0, false).
 		AddItem(search.view, 0, 0, 1, 3, 0, 0, false).
+		AddItem(player.view, 3, 0, 1, 3, 0, 0, false).
 		AddItem(results.view, 1, 0, 2, 3, 0, 0, false).
 		AddItem(status.view, 0, 3, 1, 2, 0, 0, false)
 
@@ -99,6 +108,7 @@ func (ui *UI) initWidgets() {
 
 		return event
 	})
+	ui.Logger.Print("Initialized widgets")
 
 }
 

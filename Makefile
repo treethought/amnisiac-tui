@@ -6,7 +6,7 @@ SHELL := /bin/bash
 mpv:
 
 	mpv --idle=once --no-terminal --input-ipc-server=/tmp/mpvsocket --no-video &
-	# mpv --idle --input-ipc-server=/tmp/mpvsocket &
+	# mpv --idle --input-ipc-server=/tmp/mpvsocket --no-terminal &
 
 run: mpv ## run locally outside of docker
 	source .env && go run main.go
