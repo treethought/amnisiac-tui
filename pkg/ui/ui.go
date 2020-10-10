@@ -103,7 +103,14 @@ func (ui *UI) initWidgets() {
 			ui.render()
 
 			return nil
+		}
 
+		switch event.Rune() {
+		case 'p':
+			err := ui.Player.TogglePause()
+			if err != nil {
+				panic(err)
+			}
 		}
 
 		return event
