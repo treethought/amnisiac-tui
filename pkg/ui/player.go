@@ -3,6 +3,7 @@ package ui
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"gitlab.com/tslocum/cview"
 
@@ -30,12 +31,14 @@ func NewProgressBar(app *UI) (w *ProgressBar) {
 
 }
 
+func (w *ProgressBar) Selectable() bool { return true }
+
 func (w *ProgressBar) View() cview.Primitive {
 	return w.view
 }
 func (w *ProgressBar) buildProgressBar() {
-	for true {
-
+	t := time.NewTicker(1000 * time.Millisecond)
+	for range t.C {
 		_, _, width, _ := w.view.GetRect()
 		status := w.app.Player.GetStatus()
 		if status.CurrentItem == nil {
@@ -60,7 +63,7 @@ func (w *ProgressBar) buildProgressBar() {
 
 		// barspace occupies the view between the positon and duration
 		//
-		barMaxWidth := width - len(posFormatted) - len(durationFormatted)
+		barMaxWidth := width - len(posFormatted) - len(durationFormatted) - 1
 		barPosition = float64(barMaxWidth) * progressPercent
 
 		barChars := strings.Repeat("=", int(barPosition))
