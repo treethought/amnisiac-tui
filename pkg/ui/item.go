@@ -9,10 +9,6 @@ import (
 	"gitlab.com/tslocum/cview"
 )
 
-type Item struct {
-	Widget
-}
-
 type ItemList struct {
 	Widget
 	view  *cview.List
@@ -28,6 +24,7 @@ func NewItemList(app *UI) *ItemList {
 
 	w.view.SetTitle("Items")
 	w.view.SetInputCapture(w.HandleInput)
+	w.view.SetBackgroundColor(tcell.ColorDefault)
 
 	return w
 }
@@ -66,10 +63,14 @@ func (w *ItemList) HandleInput(event *tcell.EventKey) *tcell.EventKey {
 		w.app.Logger.Printf("Selected item %s\n", item.RawTitle)
 
 		w.app.State.message = fmt.Sprintf("Playing %s", item.RawTitle)
-		err := w.app.Player.PlayTrack(item)
-		if err != nil {
-			panic(err)
-		}
+		go func() {
+			err := w.app.Player.PlayTrack(item)
+			if err != nil {
+				w.app.State.message = "Failed to play track"
+			}
+			w.app.app.QueueUpdateDraw(func() {})
+
+		}()
 		return nil
 
 	case tcell.KeyRune:
