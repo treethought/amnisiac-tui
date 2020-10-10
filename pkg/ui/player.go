@@ -23,7 +23,7 @@ func NewProgressBar(app *UI) (w *ProgressBar) {
 	w.view.SetBorder(true)
 
 	w.view.SetTitle("Player")
-	w.view.SetBackgroundColor(tcell.ColorMediumPurple)
+	w.view.SetBackgroundColor(tcell.ColorDefault)
 	go w.buildProgressBar()
 
 	return
@@ -39,7 +39,6 @@ func (w *ProgressBar) buildProgressBar() {
 		_, _, width, _ := w.view.GetRect()
 		status := w.app.Player.GetStatus()
 		if status.CurrentItem == nil {
-			w.app.Logger.Println("NO current item")
 			continue
 
 		}
@@ -47,7 +46,6 @@ func (w *ProgressBar) buildProgressBar() {
 		duration := status.CurrentDuration
 
 		if int(duration) == 0 {
-			w.app.Logger.Println("NO current duration")
 			continue
 		}
 
@@ -70,8 +68,12 @@ func (w *ProgressBar) buildProgressBar() {
 
 		barContent += barChars + emptyChars + durationFormatted
 
+		info := fmt.Sprintf("%s ||  %s", w.app.State.selectedSource, status.CurrentItem.RawTitle)
+
+		content := fmt.Sprintf("%s\n%s", barContent, info)
+
 		w.view.Clear()
-		w.view.SetText(barContent)
+		w.view.SetText(content)
 
 		w.app.app.QueueUpdateDraw(func() {})
 	}
