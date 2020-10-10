@@ -1,6 +1,9 @@
 package ui
 
-import "gitlab.com/tslocum/cview"
+import (
+	"github.com/gdamore/tcell/v2"
+	"gitlab.com/tslocum/cview"
+)
 
 type SearchBox struct {
 	Widget
@@ -13,18 +16,22 @@ func NewSearchBox(app *UI) (w *SearchBox) {
 	w.Name = "Search"
 
 	w.view = cview.NewInputField()
-	w.view.SetTitle("Search please")
-	w.view.SetText("Search")
+	w.view.SetBackgroundColor(tcell.ColorDefault)
+	w.view.SetFieldBackgroundColor(tcell.ColorDefault)
+	w.view.SetBorder(true)
+	w.view.SetTitle("Search")
+	w.view.SetText("Hit '/' to search")
 
 	return
 
 }
+
+func (w *SearchBox) Selectable() bool { return true }
 
 func (w *SearchBox) View() cview.Primitive {
 	return w.view
 }
 
 func (w *SearchBox) Render(g *cview.Grid) error {
-	w.view.SetTitle("Search please")
 	return nil
 }

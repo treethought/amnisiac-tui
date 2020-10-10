@@ -28,8 +28,12 @@ func NewSourceList(app *UI) *SourceList {
 	w.view = cview.NewList()
 
 	w.view.SetTitle("Sources")
+	w.view.SetBorder(true)
+	w.view.SetBackgroundColor(tcell.ColorDefault)
 	w.view.SetInputCapture(w.HandleInput)
 	w.view.ShowSecondaryText(false)
+
+	go w.fetchSubs()
 
 	return w
 }
@@ -40,6 +44,8 @@ func (w *SourceList) fetchSubs() {
 		log.Fatal(err)
 	}
 	w.app.State.sources = subs
+	w.Render(w.app.grid)
+	w.app.app.QueueUpdateDraw(func() {})
 
 }
 
@@ -47,6 +53,7 @@ func (w *SourceList) fetchItems() error {
 
 	selected := w.view.GetCurrentItem()
 	s := selected.GetMainText()
+	w.app.State.selectedSource = s
 
 	items, err := reddit.FetchItemsFromReddit(s)
 	if err != nil {
@@ -63,12 +70,13 @@ func (w *SourceList) View() cview.Primitive {
 }
 
 func (w *SourceList) Render(grid *cview.Grid) (err error) {
+	i := w.view.Clear().GetCurrentItemIndex()
 	w.view.Clear()
 	for _, sub := range w.app.State.sources {
 		item := cview.NewListItem(sub)
 		w.view.AddItem(item)
-
 	}
+	w.view.SetCurrentItem(i)
 
 	return
 
@@ -79,15 +87,7 @@ func (w *SourceList) HandleInput(event *tcell.EventKey) *tcell.EventKey {
 	key := event.Key()
 	switch key {
 	case tcell.KeyEnter:
-		err := w.fetchItems()
-		if err != nil {
-			panic(err)
-		}
-
-		selected := w.view.GetCurrentItem()
-		s := selected.GetMainText()
-		w.app.State.selectedSource = s
-		w.app.render()
+		go w.fetchItems()
 
 	case tcell.KeyRune:
 		switch event.Rune() {

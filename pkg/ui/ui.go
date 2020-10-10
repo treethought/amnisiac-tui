@@ -55,7 +55,7 @@ func (ui *UI) render() {
 	for _, w := range ui.Widgets {
 		w.Render(ui.grid)
 	}
-
+	ui.app.QueueUpdateDraw(func() {})
 }
 
 func (ui *UI) initWidgets() {
@@ -86,9 +86,9 @@ func (ui *UI) initWidgets() {
 		AddItem(results.view, 1, 0, 2, 3, 0, 0, false).
 		AddItem(status.view, 0, 3, 1, 2, 0, 0, false)
 
-	ui.render()
+	// ui.render()
 
-	ui.app.SetRoot(ui.grid, true).SetFocus(ui.grid)
+	ui.app.SetRoot(ui.grid, true).SetFocus(sources.view)
 
 	ui.app.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		switch event.Key() {

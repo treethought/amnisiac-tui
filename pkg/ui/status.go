@@ -3,6 +3,7 @@ package ui
 import (
 	"fmt"
 
+	"github.com/gdamore/tcell/v2"
 	"gitlab.com/tslocum/cview"
 )
 
@@ -19,7 +20,8 @@ func NewStatus(app *UI) *Status {
 	w.view = cview.NewTextView()
 
 	w.view.SetTitle("Status")
-	w.view.SetText("Greeting")
+	w.view.SetBorder(true)
+	w.view.SetBackgroundColor(tcell.ColorDefault)
 
 	return w
 }
@@ -35,5 +37,4 @@ func (w *Status) Render(grid *cview.Grid) (err error) {
 	msg := fmt.Sprintf("source: %s | view: %d\n%s", w.app.State.selectedSource, w.app.State.curView, statusMsg)
 	w.view.SetText(msg)
 	return
-
 }
