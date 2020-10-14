@@ -75,9 +75,9 @@ func (ui *UI) initWidgets() {
 	ui.Widgets = append(ui.Widgets, player)
 
 	ui.grid = cview.NewGrid().
-		SetRows(3, 0, 3).
-		SetColumns(30, 0, 30).
-		SetBorders(true)
+		SetRows(-1, -3, -1).
+		SetColumns(0, -3, 0).
+		SetBorders(false)
 
 	ui.grid.
 		AddItem(sources.view, 1, 3, 3, 2, 0, 0, false).
@@ -100,7 +100,6 @@ func (ui *UI) initWidgets() {
 			widget := ui.Widgets[ui.State.curView]
 
 			ui.app.SetFocus(widget.View())
-			ui.render()
 
 			return nil
 		}
