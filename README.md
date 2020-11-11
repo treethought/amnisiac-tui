@@ -2,12 +2,14 @@
 
 Stream music from reddit and soundcloud.
 
-This project is **very** wip at the moment.
+This project is **very** wip at the momendwhuwd.
 
 Supports:
 
 - fetching media posts from music subreddits
 - playing of media urls via mpv
+
+![Screenshot](/screenshot.png?raw=true "Screenshot")
 
 ## Getting started
 
