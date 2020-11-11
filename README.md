@@ -1,29 +1,26 @@
 # amnisiac
 
-Stream music from reddit and souncloud
+Stream music from reddit and soundcloud.
+
+This project is **very** wip at the moment.
+
+Supports:
+
+- fetching media posts from music subreddits
+- playing of media urls via mpv
 
 ## Getting started
 
 Requires [mpv](https://mpv.io/installation/)
 
-Start mpv server
-
 ```
-mpv --idle --input-ipc-server=/tmp/mpvsocket
-```
-
-Start the app
-
-```
-
-go run main.go
+make run
 
 ```
 
 Keybindings:
 
 - TAB - toggle focused pane
-- Ctl-J - move selection down
-- Ctl-K - move selection up
+- J - move selection down
+- K - move selection up
 - ENTER - select item (fetch subreddit submissions or play result item)
-
