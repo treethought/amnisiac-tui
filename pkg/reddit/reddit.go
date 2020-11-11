@@ -6,8 +6,9 @@ import (
 	"github.com/gocolly/colly"
 	"github.com/jzelinskie/geddit"
 
-	types "github.com/treethought/amnisiac/pkg/types"
 	"strings"
+
+	types "github.com/treethought/amnisiac/pkg/types"
 )
 
 func FetchSubmissions(subreddit string) (submissions []*geddit.Submission, err error) {
@@ -19,7 +20,7 @@ func FetchSubmissions(subreddit string) (submissions []*geddit.Submission, err e
 	}
 
 	subOpts := geddit.ListingOptions{
-		Limit: 10,
+		Limit: 100,
 	}
 
 	submissions, err = session.SubredditSubmissions(clean_subname, geddit.DefaultPopularity, subOpts)

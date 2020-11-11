@@ -1,6 +1,7 @@
 package player
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"os/exec"
@@ -42,50 +43,27 @@ func createSocketFile() error {
 			log.Fatal(err)
 		}
 	}
+
 	return nil
 }
 
 // StartMPV starts mpv in idle mode and specifies the ipc socket
 func StartMPV() (*exec.Cmd, error) {
 	createSocketFile()
-	cmd := exec.Command("mpv", "--idle=once", "--no-terminal", "--input-ipc-server=/tmp/mpvsocket", "--no-video", "--no-config")
-	// cmd := exec.Command("mpv", "--idle", "--input-ipc-server=/tmp/mpvsocket")
+	// cmd := exec.Command("mpv", "--idle=once", "--no-terminal", "--input-ipc-server=/tmp/mpvsocket", "--no-video", "--no-config")
+	cmd := exec.Command("mpv", "--idle", "--input-ipc-server=/tmp/mpvsocket")
 	err := cmd.Start()
 	if err != nil {
 		panic(err)
 	}
+	fmt.Println("MPV started")
 	return cmd, nil
 }
 
 func (m *MPVController) Initialize() error {
 	m.logger = logger.GetLoggerInstance()
 	m.log("initializing MPVController")
-	// m.log("Starting MPV process")
 
-	// cmd, err := m.StartMPV()
-
-	// if err != nil {
-	// 	return err
-	// }
-
-	// for {
-	// 	if m.process == nil {
-	// 		m.log("Waiting for MPV to start")
-	// 	} else {
-	// 		m.log("MPV ready")
-	// 		break
-
-	// 	}
-	// }
-
-	// m.log("Started mpv PID: ", m.process.Pid)
-
-	createSocketFile()
-	m.log("initializing clients")
-	if r := recover(); r != nil {
-		m.log("Recovered in f", r)
-
-	}
 	ipcc := mpv.NewIPCClient("/tmp/mpvsocket") // Lowlevel client
 	c := mpv.NewClient(ipcc)                   // Highlevel client, can also use RPCClient
 	m.client = c
@@ -96,15 +74,6 @@ func (m *MPVController) Initialize() error {
 
 func (m *MPVController) Shutdown() error {
 	m.log("Shutting down MPV")
-	// m.log("removing socket file")
-	// os.Remove("/tmp/mpvsocket")
-	// m.log("Killing process ", m.process.Pid)
-	// err := m.process.Signal(os.Kill)
-	// if err != nil {
-	// 	m.log("Failed to kill mpv process", m.process.Pid)
-	// 	panic(err)
-	// }
-	// m.log("Killed process", m.process.Pid)
 	return nil
 
 }
@@ -114,8 +83,10 @@ func (m *MPVController) PlayTrack(item *t.Item) error {
 
 	err := m.client.Loadfile(item.URL, mpv.LoadFileModeReplace)
 	if err != nil {
+		m.logger.Printf("Failed to play track %s", err.Error())
 		return err
 	}
+	m.logger.Println("Track loaded")
 	m.status.CurrentItem = item
 	m.status.PlayState = "playing"
 
@@ -124,17 +95,18 @@ func (m *MPVController) PlayTrack(item *t.Item) error {
 }
 
 func (m *MPVController) TogglePause() error {
-	m.log("Pausing current track", m.status.CurrentItem)
 	paused, err := m.client.Pause()
 	if err != nil {
 		return err
 	}
 	if paused {
+		m.log("Resuming current track", m.status.CurrentItem)
 		err := m.client.SetPause(false)
 		m.status.PlayState = "playing"
 		return err
 
 	} else {
+		m.log("Pausing current track", m.status.CurrentItem)
 		err := m.client.SetPause(true)
 		m.status.PlayState = "paused"
 		return err
